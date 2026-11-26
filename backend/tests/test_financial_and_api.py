@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 
+from fastapi import HTTPException
 import pytest
 
 from app.api.demo import (
@@ -10,6 +11,7 @@ from app.api.demo import (
     get_demo_overview,
     reset_demo,
 )
+from app.core.security import verify_firebase_token
 from app.financial.affordability import evaluate_purchase_affordability
 from app.financial.csv_import import parse_csv_transactions
 from app.financial.money import format_inr, rupees_to_paise
@@ -119,3 +121,17 @@ async def test_demo_api_journey():
     # Reset demo
     reset = reset_demo()
     assert reset["status"] == "reset"
+
+
+def test_firebase_token_verification_rejects_missing_or_invalid():
+    with pytest.raises(HTTPException) as exc_missing:
+        verify_firebase_token(authorization=None)
+    assert exc_missing.value.status_code == 401
+
+    with pytest.raises(HTTPException) as exc_bad_format:
+        verify_firebase_token(authorization="Basic abc123")
+    assert exc_bad_format.value.status_code == 401
+
+    with pytest.raises(HTTPException) as exc_empty:
+        verify_firebase_token(authorization="Bearer   ")
+    assert exc_empty.value.status_code == 401

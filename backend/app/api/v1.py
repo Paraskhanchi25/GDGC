@@ -112,7 +112,31 @@ def _compute_available_balance(profile: UserProfile, records: list[TxRecord]) ->
     return profile.current_savings_minor + income - expense
 
 
-# --- Profile & Onboarding ---
+# --- Auth Sync, Profile & Onboarding ---
+
+@router.post("/auth/sync")
+def sync_authenticated_user(
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> dict:
+    """Verify Firebase ID token, synchronize PostgreSQL user record, and return profile."""
+    prof = _get_user_profile(db, user.id)
+    return {
+        "synced": True,
+        "user": {
+            "id": user.id,
+            "firebase_uid": user.firebase_uid,
+            "email": user.email,
+            "display_name": user.display_name,
+        },
+        "profile": {
+            "country": prof.country,
+            "currency": prof.currency,
+            "monthly_allowance_minor": prof.monthly_allowance_minor,
+            "onboarding_completed": prof.onboarding_completed,
+        },
+    }
+
 
 @router.get("/profile")
 def get_profile(

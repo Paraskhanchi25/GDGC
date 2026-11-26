@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowLeftRight,
   Bell,
@@ -25,10 +25,9 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { usePulseAuth } from "@/components/providers";
 import { apiFetch } from "@/lib/api";
-import { signInWithGoogle, signOutUser } from "@/lib/firebase";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/home", label: "Overview", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/analytics", label: "Analytics", icon: LineChart },
   { href: "/recurring", label: "Recurring", icon: Repeat },
@@ -47,10 +46,17 @@ export function AppShell({
   unreadCount?: number;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
-  const { user, isDemo, setDemoMode, firebaseReady, darkMode, toggleDarkMode } = usePulseAuth();
+  const { user, loading: authLoading, isDemo, firebaseReady, darkMode, toggleDarkMode, logout } = usePulseAuth();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!authLoading && !isDemo && !user) {
+      router.replace("/login");
+    }
+  }, [authLoading, isDemo, user, router]);
 
   const handleResetDemo = async () => {
     setResetting(true);
@@ -64,10 +70,10 @@ export function AppShell({
 
   const handleAuthAction = async () => {
     if (user) {
-      await signOutUser();
-      setDemoMode(true);
-    } else if (firebaseReady) {
-      await signInWithGoogle();
+      await logout();
+      router.push("/login");
+    } else {
+      router.push("/login");
     }
   };
 
@@ -106,7 +112,7 @@ export function AppShell({
         <nav className="space-y-1">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
-            const active = pathname === item.href;
+            const active = pathname === item.href || (item.href === "/home" && pathname === "/dashboard");
             return (
               <Link
                 key={item.href}
@@ -140,6 +146,29 @@ export function AppShell({
       </div>
 
       <div className="space-y-2 border-t border-[var(--border-stone)] pt-4">
+        {user && (
+          <div className="flex items-center gap-2.5 rounded-lg border border-[var(--border-stone)] bg-[var(--bg-canvas)] px-2.5 py-2">
+            {user.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt={user.displayName || "Profile"}
+                referrerPolicy="no-referrer"
+                className="h-8 w-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-espresso)] text-xs font-semibold text-[var(--bg-paper)]">
+                {(user.displayName || user.email || "U").charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-[var(--text-primary)]">
+                {user.displayName || "PULSE User"}
+              </p>
+              <p className="truncate text-[11px] text-[var(--text-muted)]">{user.email}</p>
+            </div>
+          </div>
+        )}
+
         <button
           onClick={toggleDarkMode}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] transition hover:bg-[var(--bg-muted)]"
@@ -154,7 +183,7 @@ export function AppShell({
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] transition hover:bg-[var(--bg-muted)]"
           >
             {user ? <LogOut className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
-            {user ? "Sign out" : "Google Sign-in"}
+            {user ? "Sign out" : "Sign in"}
           </button>
         )}
       </div>

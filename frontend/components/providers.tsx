@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
-import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
+import { apiFetch } from "@/lib/api";
+import { getFirebaseAuth, isFirebaseConfigured, signOutUser } from "@/lib/firebase";
 
 interface AuthContextValue {
   user: FirebaseUser | null;
@@ -13,6 +14,7 @@ interface AuthContextValue {
   firebaseReady: boolean;
   darkMode: boolean;
   toggleDarkMode: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -23,6 +25,7 @@ const AuthContext = createContext<AuthContextValue>({
   firebaseReady: false,
   darkMode: false,
   toggleDarkMode: () => {},
+  logout: async () => {},
 });
 
 export function usePulseAuth() {
@@ -60,10 +63,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
       setLoading(false);
       return;
     }
-    const unsub = onAuthStateChanged(auth, (fbUser) => {
+    const unsub = onAuthStateChanged(auth, async (fbUser) => {
       setUser(fbUser);
       if (fbUser) {
         setIsDemo(false);
+        try {
+          await apiFetch("/api/v1/auth/sync", { method: "POST", isDemo: false });
+        } catch {
+          // Backend sync failure should not break auth state restoration
+        }
       }
       setLoading(false);
     });
@@ -89,6 +97,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     queryClient.invalidateQueries();
   };
 
+  const logout = async () => {
+    await signOutUser();
+    setUser(null);
+    setIsDemo(true);
+    queryClient.clear();
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthContext.Provider
@@ -100,6 +115,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           firebaseReady,
           darkMode,
           toggleDarkMode,
+          logout,
         }}
       >
         {children}

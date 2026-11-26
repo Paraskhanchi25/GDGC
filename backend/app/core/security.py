@@ -17,7 +17,7 @@ _firebase_initialized = False
 
 
 def init_firebase() -> bool:
-    """Initialize Firebase Admin SDK once from FIREBASE_SERVICE_ACCOUNT_JSON."""
+    """Initialize Firebase Admin SDK once from service account JSON or project ID."""
     global _firebase_initialized
     if _firebase_initialized:
         return True
@@ -27,20 +27,32 @@ def init_firebase() -> bool:
 
     settings = get_settings()
     raw_json = settings.FIREBASE_SERVICE_ACCOUNT_JSON.strip()
-    if not raw_json:
-        logger.warning("FIREBASE_SERVICE_ACCOUNT_JSON is not configured; protected auth endpoints will reject tokens.")
-        return False
+    project_id = (settings.FIREBASE_PROJECT_ID or settings.NEXT_PUBLIC_FIREBASE_PROJECT_ID).strip()
 
-    try:
-        service_account_info = json.loads(raw_json)
-        cred = credentials.Certificate(service_account_info)
-        firebase_admin.initialize_app(cred)
-        _firebase_initialized = True
-        logger.info("Firebase Admin SDK initialized.")
-        return True
-    except Exception as exc:
-        logger.error("Failed to initialize Firebase Admin SDK: %s", type(exc).__name__)
-        return False
+    if raw_json:
+        try:
+            service_account_info = json.loads(raw_json)
+            cred = credentials.Certificate(service_account_info)
+            firebase_admin.initialize_app(cred)
+            _firebase_initialized = True
+            logger.info("Firebase Admin SDK initialized with service account credentials.")
+            return True
+        except Exception as exc:
+            logger.error("Failed to initialize Firebase Admin SDK: %s", type(exc).__name__)
+            return False
+
+    if project_id:
+        try:
+            firebase_admin.initialize_app(options={"projectId": project_id})
+            _firebase_initialized = True
+            logger.info("Firebase Admin SDK initialized for projectId=%s (public cert verification).", project_id)
+            return True
+        except Exception as exc:
+            logger.error("Failed to initialize Firebase Admin SDK with projectId: %s", type(exc).__name__)
+            return False
+
+    logger.warning("FIREBASE_SERVICE_ACCOUNT_JSON / FIREBASE_PROJECT_ID is not configured; protected endpoints will reject tokens.")
+    return False
 
 
 def verify_firebase_token(authorization: Annotated[str | None, Header()] = None) -> dict:

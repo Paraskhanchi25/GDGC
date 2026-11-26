@@ -63,9 +63,19 @@ app = FastAPI(
 )
 
 settings = get_settings()
+allowed_origins = [
+    origin
+    for origin in {
+        settings.FRONTEND_URL.rstrip("/"),
+        "https://gdgc.swappy.lol",
+        "http://127.0.0.1:3000",
+        "http://localhost:3000",
+    }
+    if origin
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "http://127.0.0.1:3000", "http://localhost:3000"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

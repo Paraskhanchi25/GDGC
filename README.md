@@ -49,10 +49,13 @@ Open `http://localhost:3000`.
    ```
 
 ## Firebase Authentication Setup
-1. Enable **Google Sign-In** in Firebase Authentication.
-2. Set `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, and `NEXT_PUBLIC_FIREBASE_APP_ID`.
+1. Open **Firebase Console → Authentication → Sign-in method** and enable **Google** and **Email/Password**.
+2. Open **Firebase Console → Authentication → Settings → Authorized domains** and add:
+   - `gdgc.swappy.lol` (production custom domain)
+   - `localhost` (local development)
+3. Set `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, and `NEXT_PUBLIC_FIREBASE_APP_ID`.
    - **Important:** `NEXT_PUBLIC_*` variables are baked into the Next.js client bundle at Docker build time. Pass them as build arguments in Coolify.
-3. Set `FIREBASE_SERVICE_ACCOUNT_JSON` (raw JSON string) on the backend only.
+4. Set `FIREBASE_PROJECT_ID=gdgc-10270` and/or `FIREBASE_SERVICE_ACCOUNT_JSON` (raw JSON string) on the backend only.
 
 ## Gemini Enterprise Gateway Setup
 Set:
@@ -67,13 +70,14 @@ If unconfigured, the Copilot displays an honest service-unavailable state and ne
 ## SMTP Email Notifications
 Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`, and `SMTP_USE_TLS`.
 
-## Coolify Deployment (Single Dockerfile)
-1. Point Coolify to the repository root `Dockerfile`.
-2. Expose port `3000`.
-3. Add a **Persistent Storage** volume mount:
+## Coolify Deployment (Single Dockerfile · `https://gdgc.swappy.lol`)
+1. Point Coolify to the repository root `Dockerfile` and assign the custom domain `https://gdgc.swappy.lol`.
+2. Set `FRONTEND_URL=https://gdgc.swappy.lol` in Coolify environment variables.
+3. Expose port `3000`.
+4. Add a **Persistent Storage** volume mount:
    - Host/Volume path -> Container path: `/app/storage`
-4. Configure environment variables and `NEXT_PUBLIC_*` build arguments.
-5. Health check endpoint: `/health` (internal FastAPI) and `/` (Next.js).
+5. Configure environment variables and `NEXT_PUBLIC_*` build arguments.
+6. Health check endpoint: `/health` (internal FastAPI) and `/` (Next.js). Next.js App Router handles direct navigation and refresh on `/`, `/home`, `/login`, `/dashboard`, and all sub-routes natively.
 
 ## Demo Instructions
 1. Open `/` and click **Explore Demo**.

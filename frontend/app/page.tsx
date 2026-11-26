@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Calculator, Compass, LineChart, PiggyBank, Repeat, Sparkles, TrendingUp } from "lucide-react";
 import { usePulseAuth } from "@/components/providers";
-import { signInWithGoogle } from "@/lib/firebase";
 
 const PILLARS = [
   {
@@ -39,7 +40,14 @@ const PILLARS = [
 ];
 
 export default function LandingPage() {
-  const { firebaseReady, setDemoMode } = usePulseAuth();
+  const router = useRouter();
+  const { user, loading, firebaseReady, setDemoMode } = usePulseAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace("/home");
+    }
+  }, [loading, user, router]);
 
   return (
     <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)]">
@@ -54,15 +62,15 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-3">
             {firebaseReady && (
-              <button
-                onClick={() => signInWithGoogle()}
+              <Link
+                href="/login"
                 className="rounded-lg border border-[var(--border-stone)] bg-[var(--bg-paper)] px-3.5 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--bg-muted)]"
               >
                 Sign in
-              </button>
+              </Link>
             )}
             <Link
-              href="/dashboard"
+              href="/home"
               onClick={() => setDemoMode(true)}
               className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent-espresso)] px-4 py-2 text-sm font-medium text-[var(--bg-paper)] transition hover:opacity-90"
             >

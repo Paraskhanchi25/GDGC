@@ -28,19 +28,41 @@ def get_current_user(
     claims: Annotated[dict, Depends(verify_firebase_token)],
     db: Annotated[Session, Depends(get_db)],
 ) -> User:
-    """Resolve or provision the local User from verified Firebase UID."""
-    firebase_uid = claims.get("uid")
+    """
+    Resolve or provision the local PostgreSQL User from verified Firebase UID.
+    Handles safe account linking by verified email without creating duplicate records.
+    """
+    firebase_uid = claims.get("uid") or claims.get("sub")
     if not firebase_uid:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing UID in token.")
 
+    email = (claims.get("email") or "").strip().lower()
+    email_verified = bool(claims.get("email_verified", False))
+    display_name = claims.get("name") or (email.split("@")[0] if email else "Student")
+
     user = db.scalar(select(User).where(User.firebase_uid == firebase_uid))
+
+    # Safe account linking: if an existing record shares the same verified email, link UID
+    if user is None and email:
+        existing_by_email = db.scalar(select(User).where(User.email == email))
+        if existing_by_email is not None:
+            if not email_verified:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="An account with this email already exists. Verify email ownership before linking.",
+                )
+            existing_by_email.firebase_uid = firebase_uid
+            if not existing_by_email.display_name and display_name:
+                existing_by_email.display_name = display_name
+            db.commit()
+            db.refresh(existing_by_email)
+            user = existing_by_email
+
     if user is None:
-        email = claims.get("email") or f"{firebase_uid}@pulse.local"
-        display_name = claims.get("name") or email.split("@")[0]
         user = User(
             id=str(uuid.uuid4()),
             firebase_uid=firebase_uid,
-            email=email,
+            email=email or f"{firebase_uid}@pulse.local",
             display_name=display_name,
         )
         db.add(user)
@@ -62,6 +84,10 @@ def get_current_user(
         )
         db.add(profile)
         db.add(prefs)
+        db.commit()
+        db.refresh(user)
+    elif display_name and not user.display_name:
+        user.display_name = display_name
         db.commit()
         db.refresh(user)
 

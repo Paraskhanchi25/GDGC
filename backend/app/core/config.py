@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     DIRECT_DATABASE_URL: str = ""
 
     # Firebase
+    FIREBASE_PROJECT_ID: str = ""
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID: str = ""
     FIREBASE_SERVICE_ACCOUNT_JSON: str = ""
 
     # Gemini Enterprise Gateway
