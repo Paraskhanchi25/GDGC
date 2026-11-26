@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+:root {
+  --bg-canvas: #F5F2EC;
+  --bg-paper: #FCFBF8;
+  --bg-muted: #EDE8DF;
+  --border-stone: #D9D4CB;
+  --text-primary: #292724;
+  --text-secondary: #443A33;
+  --text-muted: #82776C;
+  --accent-taupe: #A69B8D;
+  --accent-espresso: #443A33;
+  --accent-sage: #858B78;
+  --status-positive: #5B7052;
+  --status-warning: #A3713B;
+  --status-danger: #9B4D42;
+}
+
+.dark {
+  --bg-canvas: #1D1B18;
+  --bg-paper: #262320;
+  --bg-muted: #302C28;
+  --border-stone: #3E3934;
+  --text-primary: #F5F2EC;
+  --text-secondary: #E3DDD3;
+  --text-muted: #A69B8D;
+  --accent-taupe: #82776C;
+  --accent-espresso: #D9D4CB;
+  --accent-sage: #939B84;
+  --status-positive: #7D9970;
+  --status-warning: #C99153;
+  --status-danger: #C76F63;
+}
+
+@layer base {
+  html,
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: "DM Sans", "Inter", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+.font-serif-display {
+  font-family: "DM Serif Display", Georgia, serif;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
