@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MotionConfig } from "framer-motion";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { apiFetch } from "@/lib/api";
 import { getFirebaseAuth, isFirebaseConfigured, signOutUser } from "@/lib/firebase";
@@ -42,6 +43,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const previousUid = useRef<string | null>(null);
   const firebaseReady = isFirebaseConfigured();
 
   useEffect(() => {
@@ -57,6 +59,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const unsub = onAuthStateChanged(
       auth,
       async (fbUser) => {
+        if (previousUid.current && fbUser && previousUid.current !== fbUser.uid) {
+          // Reset active observers as well as their cached data. Removing them
+          // during initial restoration can strand a mounted page in loading.
+          void queryClient.resetQueries();
+        }
+        previousUid.current = fbUser?.uid || null;
         setUser(fbUser);
         setSessionError(null);
         if (fbUser) {
@@ -97,7 +105,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           logout,
         }}
       >
-        {children}
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
       </AuthContext.Provider>
     </QueryClientProvider>
   );

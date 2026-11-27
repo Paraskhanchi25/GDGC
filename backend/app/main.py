@@ -9,6 +9,9 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from app.api.accounts import router as accounts_router
 from app.api.gmail import router as gmail_router
 from app.api.v1 import router as v1_router
+from app.api.smart_entry import router as smart_entry_router
+from app.api.academy import router as academy_router
+from app.api.showcase import router as showcase_router
 from app.core.config import get_settings
 from app.core.logging import request_id_ctx, setup_logging
 from app.core.security import init_firebase
@@ -36,6 +39,8 @@ class RequestIDMiddleware:
             if message["type"] == "http.response.start":
                 raw_headers = list(message.get("headers", []))
                 raw_headers.append((b"x-request-id", req_id.encode("latin1")))
+                if scope.get("path", "").startswith("/api/"):
+                    raw_headers.append((b"cache-control", b"private, no-store"))
                 message["headers"] = raw_headers
             await send(message)
 
@@ -92,3 +97,6 @@ def health_check() -> dict:
 app.include_router(accounts_router)
 app.include_router(gmail_router)
 app.include_router(v1_router)
+app.include_router(smart_entry_router)
+app.include_router(academy_router)
+app.include_router(showcase_router)

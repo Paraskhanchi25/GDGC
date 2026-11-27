@@ -1,5 +1,6 @@
 import logging
 import smtplib
+from html import escape
 from email.message import EmailMessage
 
 from app.core.config import get_settings
@@ -17,6 +18,7 @@ def build_email_bodies(title: str, message: str, recipient_name: str = "Student"
         "View details in your PULSE dashboard.\n"
         "— PULSE Student Financial Intelligence"
     )
+    title, message = escape(title), escape(message)
     html = f"""<!DOCTYPE html>
 <html>
 <body style="font-family: 'DM Sans', Arial, sans-serif; background-color: #F5F2EC; color: #292724; padding: 24px;">
@@ -56,10 +58,10 @@ def send_smtp_notification(to_email: str, title: str, message: str, recipient_na
             if settings.SMTP_USERNAME and settings.SMTP_PASSWORD:
                 server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
             server.send_message(msg)
-        logger.info("Sent SMTP notification '%s' to %s", title, to_email)
+        logger.info("Sent notification email")
         return {"sent": True}
     except Exception as exc:
-        logger.warning("SMTP delivery failed (%s): %s", type(exc).__name__, title)
+        logger.warning("Notification email delivery failed (%s)", type(exc).__name__)
         return {"sent": False, "reason": type(exc).__name__}
 
 
@@ -79,6 +81,7 @@ def build_otp_email_bodies(
         "If you didn't request this, you can safely ignore this email.\n\n"
         "— PULSE"
     )
+    bank_name, account_type, otp_code = escape(bank_name), escape(account_type), escape(otp_code)
     html = f"""<!DOCTYPE html>
 <html>
 <body style="margin: 0; padding: 32px 16px; background-color: #F5F1EA; font-family: 'DM Sans', Arial, sans-serif; color: #29231F;">
@@ -126,7 +129,7 @@ def send_otp_email(
             if settings.SMTP_USERNAME and settings.SMTP_PASSWORD:
                 server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
             server.send_message(msg)
-        logger.info("Sent PULSE verification code to %s", to_email)
+        logger.info("Sent PULSE verification email")
         return {"sent": True}
     except Exception as exc:
         logger.warning("OTP email delivery failed (%s)", type(exc).__name__)

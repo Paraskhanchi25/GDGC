@@ -26,6 +26,9 @@ frontend/out/
 frontend/dist/
 *.tsbuildinfo
 next-env.d.ts
+.npm-cache/
+frontend/test-results/
+frontend/playwright-report/
 
 # IDE / OS
 .vscode/

@@ -2,6 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCheck } from "lucide-react";
+import { ActionError } from "@/components/action-error";
+import { PageHeading } from "@/components/page-heading";
 import { AppShell } from "@/components/app-shell";
 import { ListSkeleton } from "@/components/skeletons";
 import { apiFetch } from "@/lib/api";
@@ -41,10 +43,8 @@ export default function NotificationsPage() {
   return (
     <AppShell unreadCount={data?.unread_count ?? 0}>
       <div className="space-y-6">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--copper)]">Alerts & Digest</p>
-          <h1 className="font-serif-display text-3xl text-[var(--espresso)]">Notifications</h1>
-        </div>
+        <PageHeading eyebrow="Stay in the loop" title="Your updates" description="Payment reminders, spending notes and the updates you choose to receive." />
+        <ActionError errors={[markRead.error, updatePref.error]} />
 
         <div className="grid gap-6 lg:grid-cols-12">
           <div className="pulse-card space-y-3 rounded-2xl p-5 lg:col-span-8">

@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Landmark, LogOut, Mail, Plus, Trash2, X } from "lucide-react";
+import { ActionError } from "@/components/action-error";
+import { PageHeading } from "@/components/page-heading";
 import { AppShell } from "@/components/app-shell";
 import { LinkBankFlow } from "@/components/link-bank-flow";
 import { usePulseAuth } from "@/components/providers";
@@ -73,10 +75,8 @@ export default function SettingsPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--copper)]">Preferences</p>
-          <h1 className="font-serif-display text-3xl text-[var(--espresso)]">Settings</h1>
-        </div>
+        <PageHeading eyebrow="Make it yours" title="Settings" description="Manage your accounts, notifications and session in one place." />
+        <ActionError errors={[removeAccountMutation.error, updatePref.error]} />
 
         <div className="grid max-w-2xl gap-6">
           {/* Connected Accounts Management */}

@@ -1,4 +1,5 @@
 "use client";
+import { PulseSymbol } from "@/components/pulse-logo";
 
 import Link from "next/link";
 import { ArrowLeft, Compass } from "lucide-react";
@@ -10,7 +11,7 @@ export default function NotFoundPage() {
   return (
     <div className="pulse-grid-bg flex min-h-screen flex-col items-center justify-center bg-[var(--background)] px-4 text-center text-[var(--foreground)]">
       <div className="pulse-card flex h-14 w-14 items-center justify-center rounded-2xl">
-        <Compass className="h-6 w-6 text-[var(--copper)]" />
+        <PulseSymbol className="h-6 w-6 text-[var(--copper)]" />
       </div>
       <p className="mt-5 text-xs uppercase tracking-widest text-[var(--brown-grey)]">404 · Page Not Found</p>
       <h1 className="mt-2 font-serif-display text-3xl text-[var(--espresso)]">

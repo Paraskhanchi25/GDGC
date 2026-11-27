@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { PageHeading } from "@/components/page-heading";
 import { AppShell } from "@/components/app-shell";
 import { DashboardSkeleton } from "@/components/skeletons";
 import { apiFetch } from "@/lib/api";
@@ -18,10 +19,7 @@ export default function ForecastPage() {
   return (
     <AppShell unreadCount={data?.unread_notifications ?? 0}>
       <div className="space-y-6">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--blue-accent)]">Cash-Flow Projection</p>
-          <h1 className="font-serif-display text-3xl text-[var(--espresso)]">Allowance Forecast</h1>
-        </div>
+        <PageHeading eyebrow="Look ahead" title="Your month ahead" description="An estimate of what may be left after everyday spending and upcoming commitments." />
 
         {isLoading ? (
           <DashboardSkeleton />

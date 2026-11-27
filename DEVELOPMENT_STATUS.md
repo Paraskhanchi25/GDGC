@@ -1,3 +1,11 @@
+## Direct Google Gemini migration ? 27 November 2026
+
+The administrator gateway is removed from active code. The existing assistant uses the official Google Gen AI SDK and backend-only personal credentials. A real `gemini-3.1-flash-lite` generation succeeded. See [migration report](docs/DIRECT_GEMINI_MIGRATION.md) for model pricing, verified limits, configuration and current tests. No production deployment was performed.
+
+## Product evolution update ? 27 November 2026
+
+See [the implementation handoff](docs/PRODUCT_EVOLUTION_HANDOFF.md) for current routes, Academy and showcase functionality, gateway verification limits and actual test results. Earlier notes below describe previous implementation phases and may be superseded. No production deployment was performed in this update.
+
 # PULSE — Development Status
 
 ## Completed

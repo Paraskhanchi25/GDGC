@@ -55,6 +55,7 @@ COPY backend/ /app/backend/
 # Copy Next.js standalone build artifacts
 COPY --from=frontend-builder /build/frontend/.next/standalone /app/frontend/
 COPY --from=frontend-builder /build/frontend/.next/static /app/frontend/.next/static
+COPY --from=frontend-builder /build/frontend/public /app/frontend/public
 
 # Copy supervisor and startup scripts
 COPY scripts/supervisord.conf /app/scripts/supervisord.conf

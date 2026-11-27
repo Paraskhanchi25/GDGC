@@ -1,13 +1,14 @@
 from functools import lru_cache
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(Path(__file__).resolve().parents[3] / ".env", Path(__file__).resolve().parents[2] / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -28,12 +29,15 @@ class Settings(BaseSettings):
     NEXT_PUBLIC_FIREBASE_PROJECT_ID: str = ""
     FIREBASE_SERVICE_ACCOUNT_JSON: str = ""
 
-    # Gemini Enterprise Gateway
-    GEMINI_GATEWAY_URL: str = ""
-    GEMINI_GATEWAY_KEY: str = ""
-    GEMINI_GATEWAY_MODEL: str = ""
-    GEMINI_GATEWAY_PROTOCOL: str = ""
-    GEMINI_GATEWAY_PATH: str = ""
+    # Direct Google Gemini Developer API. No gateway or alternate key fallback.
+    GEMINI_PROVIDER: str = "google"
+    GEMINI_API_KEY: str = Field(default="", repr=False)
+    GEMINI_MODEL: str = ""
+    GEMINI_MAX_INPUT_CHARS: int = Field(default=12000, ge=2000, le=64000)
+    GEMINI_MAX_OUTPUT_TOKENS: int = Field(default=512, ge=32, le=2048)
+    GEMINI_TIMEOUT_SECONDS: float = Field(default=25, ge=1, le=60)
+    GEMINI_REQUESTS_PER_MINUTE: int = Field(default=6, ge=1, le=60)
+    GEMINI_DUPLICATE_WINDOW_SECONDS: int = Field(default=15, ge=0, le=120)
 
     # SMTP
     SMTP_HOST: str = ""

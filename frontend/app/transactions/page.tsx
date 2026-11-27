@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, RotateCcw, Search, Trash2, Upload, X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { SmartTransaction } from "@/components/smart-transaction";
 import { ListSkeleton } from "@/components/skeletons";
 import { apiFetch } from "@/lib/api";
 import { formatINR, paiseToRupees, rupeesToPaise } from "@/lib/format";
@@ -38,6 +39,7 @@ export default function TransactionsPage() {
   const [endDate, setEndDate] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [smartOpen, setSmartOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [formState, setFormState] = useState({
@@ -124,21 +126,7 @@ export default function TransactionsPage() {
   });
 
   const openAddModal = () => {
-    setEditingTx(null);
-    setFormError(null);
-    setFormState({
-      account_id: accountFilter !== "all" ? accountFilter : accountsData?.accounts?.[0]?.id || "",
-      merchant: "",
-      description: "",
-      amountRupees: "",
-      transaction_type: "expense",
-      category_name: "Food",
-      payment_method: "UPI",
-      source_name: "Primary Bank",
-      transaction_date: new Date().toISOString().slice(0, 10),
-      notes: "",
-    });
-    setModalOpen(true);
+    setSmartOpen(true);
   };
 
   const openEditModal = (tx: Transaction) => {
@@ -199,6 +187,7 @@ export default function TransactionsPage() {
 
   return (
     <AppShell>
+      {smartOpen && <SmartTransaction initialAccount={accountFilter !== "all" ? accountFilter : ""} onClose={() => setSmartOpen(false)} />}
       <div className="space-y-6">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
@@ -293,6 +282,7 @@ export default function TransactionsPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search transactions"
               placeholder="Search merchant, notes, category..."
               className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] py-2 pl-9 pr-3 text-xs text-[var(--espresso)] outline-none focus:border-[var(--copper)]"
             />
@@ -486,7 +476,7 @@ export default function TransactionsPage() {
         {/* Add / Edit Modal */}
         {modalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#29231F]/40 p-4 backdrop-blur-sm">
-            <div className="pulse-card w-full max-w-md rounded-2xl p-6">
+            <div role="dialog" aria-modal="true" aria-label="Edit transaction" className="pulse-card max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="font-serif-display text-xl text-[var(--espresso)]">
                   {editingTx ? "Edit Transaction" : "Add Transaction"}
@@ -504,8 +494,8 @@ export default function TransactionsPage() {
                 className="space-y-3 text-xs"
               >
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--espresso)]">Merchant</label>
-                  <input
+                  <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="transactions-field-1">Merchant</label>
+                  <input id="transactions-field-1"
                     required
                     value={formState.merchant}
                     onChange={(e) => setFormState({ ...formState, merchant: e.target.value })}
@@ -514,8 +504,8 @@ export default function TransactionsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block font-medium text-[var(--espresso)]">Amount (INR)</label>
-                    <input
+                    <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="transactions-field-2">Amount (INR)</label>
+                    <input id="transactions-field-2"
                       required
                       type="number"
                       step="0.01"
@@ -526,8 +516,8 @@ export default function TransactionsPage() {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block font-medium text-[var(--espresso)]">Type</label>
-                    <select
+                    <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="transactions-field-3">Type</label>
+                    <select id="transactions-field-3"
                       value={formState.transaction_type}
                       onChange={(e) =>
                         setFormState({ ...formState, transaction_type: e.target.value as "expense" | "income" })
@@ -541,8 +531,8 @@ export default function TransactionsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block font-medium text-[var(--espresso)]">Category</label>
-                    <select
+                    <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="transactions-field-4">Category</label>
+                    <select id="transactions-field-4"
                       value={formState.category_name}
                       onChange={(e) => setFormState({ ...formState, category_name: e.target.value })}
                       className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-[var(--espresso)]"
@@ -553,8 +543,8 @@ export default function TransactionsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block font-medium text-[var(--espresso)]">Date</label>
-                    <input
+                    <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="transactions-field-5">Date</label>
+                    <input id="transactions-field-5"
                       required
                       type="date"
                       value={formState.transaction_date}
@@ -565,8 +555,8 @@ export default function TransactionsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block font-medium text-[var(--espresso)]">Payment Method</label>
-                    <select
+                    <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="transactions-field-6">Payment Method</label>
+                    <select id="transactions-field-6"
                       value={formState.payment_method}
                       onChange={(e) => setFormState({ ...formState, payment_method: e.target.value })}
                       className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-[var(--espresso)]"
@@ -577,8 +567,8 @@ export default function TransactionsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block font-medium text-[var(--espresso)]">Account / Source</label>
-                    <input
+                    <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="transactions-field-7">Account / Source</label>
+                    <input id="transactions-field-7"
                       value={formState.source_name}
                       onChange={(e) => setFormState({ ...formState, source_name: e.target.value })}
                       className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-[var(--espresso)]"
@@ -586,8 +576,8 @@ export default function TransactionsPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--espresso)]">Description</label>
-                  <input
+                  <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="transactions-field-8">Description</label>
+                  <input id="transactions-field-8"
                     value={formState.description}
                     onChange={(e) => setFormState({ ...formState, description: e.target.value })}
                     className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-[var(--espresso)]"

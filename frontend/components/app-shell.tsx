@@ -7,6 +7,7 @@ import {
   ArrowLeftRight,
   Bell,
   Calculator,
+  BookOpen,
   Compass,
   CreditCard,
   Globe,
@@ -22,6 +23,7 @@ import {
   UserCircle,
   X,
 } from "lucide-react";
+import { PulseSymbol } from "@/components/pulse-logo";
 import { BrandedLoader } from "@/components/branded-loader";
 import { usePulseAuth } from "@/components/providers";
 
@@ -39,6 +41,7 @@ const PRIMARY_NAV = [
 ];
 
 const ACCOUNT_NAV = [
+  { href: "/learn/credit-cards", label: "Credit Academy", icon: BookOpen },
   { href: "/profile", label: "Profile", icon: UserCircle },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -84,6 +87,7 @@ export function AppShell({
       <Link
         key={item.href}
         href={item.href}
+        aria-current={active ? "page" : undefined}
         onClick={() => setMobileOpen(false)}
         className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm transition ${
           active
@@ -116,7 +120,7 @@ export function AppShell({
         <div className="mb-7 flex items-center justify-between px-2">
           <Link href="/" className="flex items-center gap-2.5" title="Return to PULSE homepage">
             <div className="pulse-card flex h-8 w-8 items-center justify-center rounded-xl">
-              <Compass className="h-4 w-4 text-[var(--copper)]" />
+              <PulseSymbol className="h-4 w-4 text-[var(--copper)]" />
             </div>
             <div>
               <span className="font-serif-display text-xl tracking-tight text-[var(--espresso)]">PULSE</span>
@@ -180,7 +184,7 @@ export function AppShell({
   );
 
   return (
-    <div className="flex min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <div className="app-workspace flex min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       {/* Desktop Sidebar */}
       <aside className="hidden w-64 shrink-0 border-r border-[var(--border)] bg-[var(--elevated-ivory)] lg:block">
         <div className="sticky top-0 h-screen overflow-y-auto">
@@ -192,7 +196,7 @@ export function AppShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--elevated-ivory)] px-4 py-3 lg:hidden">
           <Link href="/" className="flex items-center gap-2">
-            <Compass className="h-4 w-4 text-[var(--copper)]" />
+            <PulseSymbol className="h-4 w-4 text-[var(--copper)]" />
             <span className="font-serif-display text-lg text-[var(--espresso)]">PULSE</span>
           </Link>
           <button
@@ -211,7 +215,7 @@ export function AppShell({
           </div>
         )}
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main id="main-content" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
       </div>
     </div>
   );

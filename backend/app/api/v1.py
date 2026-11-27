@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
@@ -92,12 +92,11 @@ def _tx_row_to_dict(row: Transaction) -> dict:
     }
 
 
-def _resolve_user_account(db: Session, user_id: str, account_id: str | None) -> Account | None:
+def _resolve_user_account(db: Session, user_id: str, account_id: str | None, lock: bool = False) -> Account | None:
     if not account_id or account_id == "all":
         return None
-    acc = db.scalar(
-        select(Account).where(Account.id == account_id, Account.user_id == user_id, Account.is_active.is_(True))
-    )
+    statement = select(Account).where(Account.id == account_id, Account.user_id == user_id, Account.is_active.is_(True))
+    acc = db.scalar(statement.with_for_update() if lock else statement)
     if acc is None:
         raise HTTPException(status_code=404, detail="Account not found.")
     return acc
@@ -284,7 +283,7 @@ def create_transaction(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
-    acc = _resolve_user_account(db, user.id, payload.account_id) if payload.account_id else None
+    acc = _resolve_user_account(db, user.id, payload.account_id, lock=True) if payload.account_id else None
     source_name = acc.account_name if acc else payload.source_name
     category = payload.category_name or infer_category(payload.merchant, payload.description, payload.transaction_type)
     tx = Transaction(
@@ -320,11 +319,17 @@ def update_transaction(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
-    tx = db.scalar(select(Transaction).where(Transaction.id == tx_id, Transaction.user_id == user.id))
+    tx = db.scalar(select(Transaction).where(Transaction.id == tx_id, Transaction.user_id == user.id).with_for_update())
     if tx is None:
         raise HTTPException(status_code=404, detail="Transaction not found.")
+    old_effect = tx.amount_minor if tx.transaction_type == "income" else -tx.amount_minor
     for field, val in payload.model_dump(exclude_none=True).items():
         setattr(tx, field, val)
+    if tx.account_id:
+        acc = db.scalar(select(Account).where(Account.id == tx.account_id, Account.user_id == user.id).with_for_update())
+        if acc is not None:
+            new_effect = tx.amount_minor if tx.transaction_type == "income" else -tx.amount_minor
+            acc.current_balance_minor += new_effect - old_effect
     db.commit()
     db.refresh(tx)
     return _tx_row_to_dict(tx)
@@ -336,11 +341,11 @@ def delete_transaction(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
-    tx = db.scalar(select(Transaction).where(Transaction.id == tx_id, Transaction.user_id == user.id))
+    tx = db.scalar(select(Transaction).where(Transaction.id == tx_id, Transaction.user_id == user.id).with_for_update())
     if tx is None:
         raise HTTPException(status_code=404, detail="Transaction not found.")
     if tx.account_id:
-        acc = db.scalar(select(Account).where(Account.id == tx.account_id, Account.user_id == user.id))
+        acc = db.scalar(select(Account).where(Account.id == tx.account_id, Account.user_id == user.id).with_for_update())
         if acc is not None:
             if tx.transaction_type == "income":
                 acc.current_balance_minor -= tx.amount_minor
@@ -711,7 +716,7 @@ async def copilot_chat(
     records = _load_user_tx_records(db, user.id)
     prof = _get_user_profile(db, user.id)
     context = build_copilot_context(
-        user_label=user.display_name or user.email,
+        user_label="Student",
         records=records,
         monthly_allowance_minor=prof.monthly_allowance_minor,
         available_balance_minor=overview["available_balance_minor"],
@@ -719,7 +724,9 @@ async def copilot_chat(
         recurring_payments=overview["recurring_payments"],
         forecast=overview["forecast"],
         savings_goals=overview["goals"],
+        question=payload.question,
     )
+    context.period_comparison = overview["period_comparison"]
 
     conv_id = payload.conversation_id
     if conv_id:
@@ -732,18 +739,23 @@ async def copilot_chat(
         db.flush()
 
     history_rows = db.scalars(
-        select(AIMessage).where(AIMessage.conversation_id == conv.id).order_by(AIMessage.created_at)
+        select(AIMessage).where(AIMessage.conversation_id == conv.id, AIMessage.user_id == user.id).order_by(AIMessage.created_at.desc()).limit(6)
     ).all()
-    history = [{"role": m.role, "content": m.content} for m in history_rows]
+    history = [{"role": m.role, "content": m.content} for m in reversed(history_rows)]
 
-    result = await CopilotService().ask(question=payload.question, context=context, history=history)
+    question_time = datetime.now(timezone.utc)
+    result = await CopilotService().ask(question=payload.question, context=context, history=history, user_id=user.id)
     if result.status == "ok" and result.answer:
-        db.add(AIMessage(id=str(uuid.uuid4()), conversation_id=conv.id, user_id=user.id, role="user", content=payload.question))
-        db.add(AIMessage(id=str(uuid.uuid4()), conversation_id=conv.id, user_id=user.id, role="assistant", content=result.answer))
+        answer_time = max(datetime.now(timezone.utc), question_time + timedelta(microseconds=1))
+        db.add(AIMessage(id=str(uuid.uuid4()), conversation_id=conv.id, user_id=user.id, role="user", content=payload.question, created_at=question_time))
+        db.add(AIMessage(id=str(uuid.uuid4()), conversation_id=conv.id, user_id=user.id, role="assistant", content=result.answer, created_at=answer_time))
+        conv.updated_at = answer_time
         db.commit()
 
     resp = result.model_dump()
-    resp["conversation_id"] = conv.id
+    resp["conversation_id"] = conv.id if result.status == "ok" else payload.conversation_id
+    if result.status != "ok":
+        db.rollback()
     return resp
 
 
@@ -859,6 +871,6 @@ def trigger_test_email(
     return send_smtp_notification(
         to_email=user.email,
         title="PULSE Notification Test",
-        message="Your SMTP email notifications are configured and working.",
+        message="Your PULSE email notifications are working. You can adjust what you receive in Settings.",
         recipient_name=user.display_name or "Student",
     )

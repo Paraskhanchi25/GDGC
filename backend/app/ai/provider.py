@@ -16,5 +16,6 @@ class AIProvider(ABC):
         question: str,
         context: CopilotContext,
         history: list[dict[str, str]] | None = None,
+        *, user_id: str,
     ) -> CopilotResult:
         """Generate a grounded response from the AI provider."""

@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Compass, Loader2 } from "lucide-react";
+import { PulseSymbol } from "@/components/pulse-logo";
 import { BrandedLoader } from "@/components/branded-loader";
 import { usePulseAuth } from "@/components/providers";
 import { apiFetch } from "@/lib/api";
@@ -14,10 +15,11 @@ export default function LoginPage() {
   const { user, loading: authLoading, firebaseReady, sessionError } = usePulseAuth();
 
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
+  const signingIn = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && !signingIn.current) {
       router.replace("/home");
     }
   }, [authLoading, user, router]);
@@ -29,6 +31,7 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     if (googleSubmitting) return;
     setError(null);
+    signingIn.current = true;
     setGoogleSubmitting(true);
     try {
       await signInWithGoogle();
@@ -45,6 +48,7 @@ export default function LoginPage() {
       }
       router.replace("/home");
     } catch (err) {
+      signingIn.current = false;
       setError(mapFirebaseAuthError(err));
     } finally {
       setGoogleSubmitting(false);
@@ -59,7 +63,7 @@ export default function LoginPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="pulse-card flex h-8 w-8 items-center justify-center rounded-xl">
-              <Compass className="h-4 w-4 text-[var(--copper)]" />
+              <PulseSymbol className="h-4 w-4 text-[var(--copper)]" />
             </div>
             <span className="font-serif-display text-xl tracking-tight text-[var(--espresso)]">PULSE</span>
           </Link>

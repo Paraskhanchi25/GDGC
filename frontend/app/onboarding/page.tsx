@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Compass } from "lucide-react";
+import { PulseSymbol } from "@/components/pulse-logo";
 import { BrandedLoader } from "@/components/branded-loader";
 import { LinkBankFlow } from "@/components/link-bank-flow";
 import { usePulseAuth } from "@/components/providers";
@@ -28,7 +29,7 @@ export default function OnboardingPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="pulse-card flex h-8 w-8 items-center justify-center rounded-xl">
-              <Compass className="h-4 w-4 text-[var(--copper)]" />
+              <PulseSymbol className="h-4 w-4 text-[var(--copper)]" />
             </div>
             <span className="font-serif-display text-xl tracking-tight text-[var(--espresso)]">PULSE</span>
           </Link>

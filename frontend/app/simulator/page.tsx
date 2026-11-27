@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { PageHeading } from "@/components/page-heading";
 import { AppShell } from "@/components/app-shell";
 import { apiFetch } from "@/lib/api";
 import { formatINR, rupeesToPaise } from "@/lib/format";
@@ -54,13 +55,7 @@ export default function SimulatorPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--copper)]">Decision Engine</p>
-          <h1 className="font-serif-display text-3xl text-[var(--espresso)]">Purchase Affordability Simulator</h1>
-          <p className="mt-1 text-sm text-[var(--brown-grey)]">
-            Evaluate a planned purchase against your liquid balance, upcoming commitments, and savings goals.
-          </p>
-        </div>
+        <PageHeading eyebrow="Think it through" title="Before you buy" description="Explore how a purchase could affect the money left for essentials and savings." />
 
         <div className="grid gap-6 lg:grid-cols-12">
           <form
@@ -71,8 +66,8 @@ export default function SimulatorPage() {
             className="pulse-card space-y-4 rounded-2xl p-5 lg:col-span-5"
           >
             <div>
-              <label className="mb-1 block text-xs font-medium text-[var(--espresso)]">Purchase Name</label>
-              <input
+              <label className="mb-1 block text-xs font-medium text-[var(--espresso)]" htmlFor="simulator-field-1">Purchase Name</label>
+              <input id="simulator-field-1"
                 required
                 value={purchaseName}
                 onChange={(e) => setPurchaseName(e.target.value)}
@@ -82,8 +77,8 @@ export default function SimulatorPage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-[var(--espresso)]">Amount (INR)</label>
-              <input
+              <label className="mb-1 block text-xs font-medium text-[var(--espresso)]" htmlFor="simulator-field-2">Amount (INR)</label>
+              <input id="simulator-field-2"
                 required
                 type="number"
                 min="1"
@@ -96,8 +91,8 @@ export default function SimulatorPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-[var(--espresso)]">Planned Date</label>
-                <input
+                <label className="mb-1 block text-xs font-medium text-[var(--espresso)]" htmlFor="simulator-field-3">Planned Date</label>
+                <input id="simulator-field-3"
                   type="date"
                   value={purchaseDate}
                   onChange={(e) => setPurchaseDate(e.target.value)}
@@ -105,8 +100,8 @@ export default function SimulatorPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-[var(--espresso)]">Payment Schedule</label>
-                <select
+                <label className="mb-1 block text-xs font-medium text-[var(--espresso)]" htmlFor="simulator-field-4">Payment Schedule</label>
+                <select id="simulator-field-4"
                   value={paymentMonths}
                   onChange={(e) => setPaymentMonths(e.target.value)}
                   className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-xs text-[var(--espresso)]"

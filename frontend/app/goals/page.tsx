@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
+import { ActionError } from "@/components/action-error";
+import { PageHeading } from "@/components/page-heading";
 import { AppShell } from "@/components/app-shell";
 import { ListSkeleton } from "@/components/skeletons";
 import { apiFetch } from "@/lib/api";
@@ -57,10 +59,8 @@ export default function GoalsPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--positive)]">Targets</p>
-          <h1 className="font-serif-display text-3xl text-[var(--espresso)]">Savings Goals</h1>
-        </div>
+        <PageHeading eyebrow="Make room for more" title="Savings with a purpose" description="Set a target, add contributions and see a pace that fits your plans." />
+        <ActionError errors={[createGoal.error, contribute.error]} />
 
         <form
           onSubmit={(e) => {
@@ -71,6 +71,7 @@ export default function GoalsPage() {
         >
           <input
             required
+            aria-label="Goal name"
             placeholder="Goal name (e.g., Tuition, Laptop)"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
@@ -80,6 +81,7 @@ export default function GoalsPage() {
             required
             type="number"
             min="100"
+            aria-label="Target amount in rupees"
             placeholder="Target amount (INR)"
             value={newTarget}
             onChange={(e) => setNewTarget(e.target.value)}
@@ -87,6 +89,7 @@ export default function GoalsPage() {
           />
           <input
             required
+            aria-label="Goal target date"
             type="date"
             value={newDate}
             onChange={(e) => setNewDate(e.target.value)}
@@ -152,6 +155,7 @@ export default function GoalsPage() {
                   <input
                     type="number"
                     min="1"
+                    aria-label={`Contribution to ${g.name} in rupees`}
                     placeholder="Add contribution (INR)"
                     value={contribAmounts[g.id] || ""}
                     onChange={(e) => setContribAmounts({ ...contribAmounts, [g.id]: e.target.value })}

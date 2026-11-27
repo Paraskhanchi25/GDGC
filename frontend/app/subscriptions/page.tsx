@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { PageHeading } from "@/components/page-heading";
 import { AppShell } from "@/components/app-shell";
 import { DashboardSkeleton } from "@/components/skeletons";
 import { apiFetch } from "@/lib/api";
@@ -193,13 +194,7 @@ function SubscriptionsContent() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--copper)]">Recurring Intelligence</p>
-          <h1 className="font-serif-display text-3xl text-[var(--espresso)]">My Subscriptions</h1>
-          <p className="mt-1 text-sm text-[var(--brown-grey)]">
-            Automatically track active subscriptions, renewals, and trials from subscription billing emails.
-          </p>
-        </div>
+        <PageHeading eyebrow="The regular payments" title="Your subscriptions" description="Review subscriptions detected from billing emails after you choose to connect Gmail." />
 
         {/* OAuth Callback Banners */}
         {gmailCallbackState === "connected" && (
@@ -469,15 +464,15 @@ function SubscriptionsContent() {
                 ) : (
                   <div className="h-56 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
+                      <BarChart accessibilityLayer
                         data={subsData.category_breakdown.map((c) => ({
                           category: c.category,
                           amount: paiseToRupees(c.monthly_minor),
                         }))}
                       >
                         <CartesianGrid strokeDasharray="3 3" stroke="#E9E4DC" vertical={false} />
-                        <XAxis dataKey="category" tick={{ fontSize: 11, fill: "#766E66" }} tickLine={false} axisLine={false} />
-                        <YAxis tick={{ fontSize: 11, fill: "#766E66" }} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v}`} />
+                        <XAxis dataKey="category" tick={{ fontSize: 14, fill: "#766E66" }} tickLine={false} axisLine={false} />
+                        <YAxis tick={{ fontSize: 14, fill: "#766E66" }} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v}`} />
                         <Tooltip
                           formatter={(val: number) => [`₹${val.toLocaleString("en-IN")}/mo`, "Monthly"]}
                           contentStyle={{
@@ -488,7 +483,7 @@ function SubscriptionsContent() {
                             fontSize: "12px",
                           }}
                         />
-                        <Bar dataKey="amount" fill="#B87950" radius={[6, 6, 0, 0]} />
+                        <Bar isAnimationActive={false} dataKey="amount" fill="#B87950" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -567,8 +562,8 @@ function SubscriptionsContent() {
               className="space-y-3 text-xs"
             >
               <div>
-                <label className="mb-1 block font-medium text-[var(--espresso)]">Merchant</label>
-                <input
+                <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="subscriptions-field-1">Merchant</label>
+                <input id="subscriptions-field-1"
                   required
                   value={editForm.merchant_name}
                   onChange={(e) => setEditForm({ ...editForm, merchant_name: e.target.value })}
@@ -577,8 +572,8 @@ function SubscriptionsContent() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--espresso)]">Amount (INR)</label>
-                  <input
+                  <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="subscriptions-field-2">Amount (INR)</label>
+                  <input id="subscriptions-field-2"
                     type="number"
                     min="0"
                     step="0.01"
@@ -588,8 +583,8 @@ function SubscriptionsContent() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--espresso)]">Frequency</label>
-                  <select
+                  <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="subscriptions-field-3">Frequency</label>
+                  <select id="subscriptions-field-3"
                     value={editForm.billing_frequency}
                     onChange={(e) => setEditForm({ ...editForm, billing_frequency: e.target.value })}
                     className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-[var(--espresso)]"
@@ -604,8 +599,8 @@ function SubscriptionsContent() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--espresso)]">Next Billing Date</label>
-                  <input
+                  <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="subscriptions-field-4">Next Billing Date</label>
+                  <input id="subscriptions-field-4"
                     type="date"
                     value={editForm.next_billing_date}
                     onChange={(e) => setEditForm({ ...editForm, next_billing_date: e.target.value })}
@@ -613,8 +608,8 @@ function SubscriptionsContent() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--espresso)]">Status</label>
-                  <select
+                  <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="subscriptions-field-5">Status</label>
+                  <select id="subscriptions-field-5"
                     value={editForm.subscription_status}
                     onChange={(e) => setEditForm({ ...editForm, subscription_status: e.target.value })}
                     className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-[var(--espresso)]"

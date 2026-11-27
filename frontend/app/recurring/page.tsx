@@ -2,6 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
+import { ActionError } from "@/components/action-error";
+import { PageHeading } from "@/components/page-heading";
 import { AppShell } from "@/components/app-shell";
 import { ListSkeleton } from "@/components/skeletons";
 import { apiFetch } from "@/lib/api";
@@ -30,13 +32,8 @@ export default function RecurringPage() {
   return (
     <AppShell unreadCount={data?.unread_notifications ?? 0}>
       <div className="space-y-6">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--copper)]">Commitments</p>
-          <h1 className="font-serif-display text-3xl text-[var(--espresso)]">Recurring Payments</h1>
-          <p className="mt-1 text-sm text-[var(--brown-grey)]">
-            Detected from repeated merchant intervals and consistent amounts. Confirm or dismiss detections below.
-          </p>
-        </div>
+        <PageHeading eyebrow="Commitments" title="Keep the regulars in view" description="Review repeating payments. Confirm the ones you expect, and dismiss anything that does not belong." />
+        <ActionError errors={[statusMutation.error]} />
 
         <div className="pulse-card rounded-2xl p-5">
           {isLoading ? (

@@ -11,6 +11,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { ChartSummary } from "@/components/chart-summary";
+import { PageHeading } from "@/components/page-heading";
 import { AppShell } from "@/components/app-shell";
 import { DashboardSkeleton } from "@/components/skeletons";
 import { apiFetch } from "@/lib/api";
@@ -26,10 +28,7 @@ export default function AnalyticsPage() {
   return (
     <AppShell unreadCount={data?.unread_notifications ?? 0}>
       <div className="space-y-6">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--copper)]">Intelligence</p>
-          <h1 className="font-serif-display text-3xl text-[var(--espresso)]">Spending Analytics</h1>
-        </div>
+        <PageHeading eyebrow="Patterns" title="Spending, in perspective" description="See how your month is taking shape, and where your spending has changed." />
 
         {isLoading ? (
           <DashboardSkeleton />
@@ -66,14 +65,15 @@ export default function AnalyticsPage() {
             </div>
 
             <div className="pulse-card rounded-2xl p-5">
-              <h2 className="text-sm font-semibold text-[var(--espresso)]">Monthly Income vs. Expenses</h2>
+              <h2 className="text-lg font-medium text-[var(--espresso)]">Monthly income and expenses</h2>
+              <ChartSummary data={data} />
               <p className="mb-4 text-xs text-[var(--brown-grey)]">Cash-flow history in INR</p>
               {data.monthly_trends.length === 0 ? (
                 <p className="py-10 text-center text-xs text-[var(--brown-grey)]">Not enough monthly history yet.</p>
               ) : (
                 <div className="h-72 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
+                    <BarChart accessibilityLayer
                       data={data.monthly_trends.map((m) => ({
                         label: m.label,
                         Income: paiseToRupees(m.income_minor),
@@ -81,8 +81,8 @@ export default function AnalyticsPage() {
                       }))}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#E9E4DC" vertical={false} />
-                      <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#766E66" }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: "#766E66" }} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v}`} />
+                      <XAxis dataKey="label" tick={{ fontSize: 14, fill: "#766E66" }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 14, fill: "#766E66" }} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v}`} />
                       <Tooltip
                         formatter={(val: number) => `₹${val.toLocaleString("en-IN")}`}
                         contentStyle={{
@@ -94,8 +94,8 @@ export default function AnalyticsPage() {
                         }}
                       />
                       <Legend wrapperStyle={{ fontSize: "12px", color: "#29231F" }} />
-                      <Bar dataKey="Income" fill="#54734C" radius={[6, 6, 0, 0]} />
-                      <Bar dataKey="Expenses" fill="#B87950" radius={[6, 6, 0, 0]} />
+                      <Bar isAnimationActive={false} dataKey="Income" fill="#54734C" radius={[6, 6, 0, 0]} />
+                      <Bar isAnimationActive={false} dataKey="Expenses" fill="#B87950" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

@@ -1,10 +1,12 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { PulseSymbol } from "@/components/pulse-logo";
+import { motion } from "framer-motion";
+import { useClientMotion } from "@/lib/use-client-motion";
 import { Compass } from "lucide-react";
 
 export function BrandedLoader({ message = "Preparing your workspace" }: { message?: string }) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = !useClientMotion();
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--background)] px-4 text-[var(--foreground)]">
@@ -18,7 +20,7 @@ export function BrandedLoader({ message = "Preparing your workspace" }: { messag
           />
         )}
         <div className="pulse-card flex h-14 w-14 items-center justify-center rounded-2xl">
-          <Compass className="h-6 w-6 text-[var(--copper)]" />
+          <PulseSymbol className="h-6 w-6 text-[var(--copper)]" />
         </div>
       </div>
 

@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2 } from "lucide-react";
+import { ActionError } from "@/components/action-error";
+import { PageHeading } from "@/components/page-heading";
 import { AppShell } from "@/components/app-shell";
 import { usePulseAuth } from "@/components/providers";
 import { ListSkeleton } from "@/components/skeletons";
@@ -59,10 +61,8 @@ export default function ProfilePage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--copper)]">Account</p>
-          <h1 className="font-serif-display text-3xl text-[var(--espresso)]">Profile & Allowance</h1>
-        </div>
+        <PageHeading eyebrow="Your money rhythm" title="Profile & allowance" description="Keep your allowance and savings details current for more useful planning." />
+        <ActionError errors={[updateMutation.error]} />
 
         {isLoading ? (
           <ListSkeleton rows={4} />
@@ -105,8 +105,8 @@ export default function ProfilePage() {
               className="space-y-4 text-xs"
             >
               <div>
-                <label className="mb-1 block font-medium text-[var(--espresso)]">Display Name</label>
-                <input
+                <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="profile-field-1">Display Name</label>
+                <input id="profile-field-1"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-sm text-[var(--espresso)]"
@@ -115,8 +115,8 @@ export default function ProfilePage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--espresso)]">Monthly Allowance (INR)</label>
-                  <input
+                  <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="profile-field-2">Monthly Allowance (INR)</label>
+                  <input id="profile-field-2"
                     type="number"
                     min="0"
                     value={allowanceRupees}
@@ -125,8 +125,8 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--espresso)]">Current Savings (INR)</label>
-                  <input
+                  <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="profile-field-3">Current Savings (INR)</label>
+                  <input id="profile-field-3"
                     type="number"
                     min="0"
                     value={currentSavingsRupees}
@@ -138,8 +138,8 @@ export default function ProfilePage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--espresso)]">Allowance Frequency</label>
-                  <select
+                  <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="profile-field-4">Allowance Frequency</label>
+                  <select id="profile-field-4"
                     value={frequency}
                     onChange={(e) => setFrequency(e.target.value)}
                     className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-sm text-[var(--espresso)]"
@@ -150,8 +150,8 @@ export default function ProfilePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--espresso)]">Next Allowance Date</label>
-                  <input
+                  <label className="mb-1 block font-medium text-[var(--espresso)]" htmlFor="profile-field-5">Next Allowance Date</label>
+                  <input id="profile-field-5"
                     type="date"
                     value={nextAllowanceDate}
                     onChange={(e) => setNextAllowanceDate(e.target.value)}

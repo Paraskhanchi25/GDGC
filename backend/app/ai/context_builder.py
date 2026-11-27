@@ -1,6 +1,9 @@
 from app.ai.schemas import CopilotContext
 from app.financial.money import format_inr
 from app.financial.transactions import TxRecord
+from collections import defaultdict
+from datetime import date, timedelta
+import re
 
 
 def build_copilot_context(
@@ -12,18 +15,21 @@ def build_copilot_context(
     recurring_payments: list[dict],
     forecast: dict,
     savings_goals: list[dict],
+    question: str = "",
 ) -> CopilotContext:
-    recent = [
-        {
-            "date": t.transaction_date.isoformat(),
-            "merchant": t.merchant,
-            "category": t.category_name,
-            "type": t.transaction_type,
-            "amount": format_inr(t.amount_minor),
-            "payment_method": t.payment_method,
-        }
-        for t in sorted(records, key=lambda x: x.transaction_date, reverse=True)[:15]
-    ]
+    today = date.today()
+    current_start = today.replace(day=1)
+    previous_end = current_start - timedelta(days=1)
+    previous_start = previous_end.replace(day=1)
+    totals = defaultdict(lambda: {"current": 0, "previous": 0})
+    for tx in records:
+        if tx.transaction_type != "expense" or tx.transaction_date > today:
+            continue
+        period = "current" if tx.transaction_date >= current_start else "previous" if tx.transaction_date >= previous_start else None
+        if period:
+            totals[tx.category_name][period] += tx.amount_minor
+    changes = [{"category": name, "current_month_to_date_minor": values["current"], "previous_full_month_minor": values["previous"], "difference_minor": values["current"] - values["previous"]} for name, values in totals.items()]
+    changes.sort(key=lambda item: abs(item["difference_minor"]), reverse=True)
 
     goals_summary = [
         {
@@ -33,7 +39,7 @@ def build_copilot_context(
             "target": format_inr(g["target_amount_minor"]),
             "required_weekly": format_inr(g["required_weekly_minor"]),
         }
-        for g in savings_goals
+        for g in savings_goals[:8]
     ]
 
     recurring_summary = [
@@ -48,7 +54,7 @@ def build_copilot_context(
     ]
 
     return CopilotContext(
-        user_label=user_label,
+        user_label="Student",
         currency="INR",
         available_balance_formatted=format_inr(available_balance_minor),
         monthly_allowance_formatted=format_inr(monthly_allowance_minor),
@@ -58,5 +64,6 @@ def build_copilot_context(
         upcoming_recurring=recurring_summary,
         forecast_summary=forecast.get("summary", ""),
         savings_goals=goals_summary,
-        recent_transactions=recent,
+        recent_transactions=[{"date": t.transaction_date.isoformat(), "merchant": t.merchant[:80], "category": t.category_name[:80], "type": t.transaction_type, "amount": format_inr(t.amount_minor)} for t in sorted(records, key=lambda tx: tx.transaction_date, reverse=True)[:3]] if re.search(r"\b(last|recent|transaction)\b", question, re.I) else [],
+        category_changes=changes[:8],
     )

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class CopilotContext(BaseModel):
@@ -13,6 +13,8 @@ class CopilotContext(BaseModel):
     forecast_summary: str
     savings_goals: list[dict]
     recent_transactions: list[dict]
+    period_comparison: dict = Field(default_factory=dict)
+    category_changes: list[dict] = Field(default_factory=list)
 
 
 class CopilotResult(BaseModel):
@@ -21,3 +23,6 @@ class CopilotResult(BaseModel):
     model: str | None = None
     grounded_metrics: dict | None = None
     error_detail: str | None = None
+    error_category: str | None = None
+    retryable: bool = False
+    usage: dict[str, int | float | None] | None = None
