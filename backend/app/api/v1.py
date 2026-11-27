@@ -28,6 +28,7 @@ from app.financial.transactions import TxRecord, filter_transactions, is_duplica
 from app.models.models import (
     AIConversation,
     AIMessage,
+    Account,
     ImportJob,
     Notification,
     NotificationPreference,
@@ -70,12 +71,14 @@ def _to_tx_record(row: Transaction) -> TxRecord:
         source_name=row.source_name,
         transaction_date=row.transaction_date,
         notes=row.notes,
+        account_id=row.account_id,
     )
 
 
 def _tx_row_to_dict(row: Transaction) -> dict:
     return {
         "id": row.id,
+        "account_id": row.account_id,
         "merchant": row.merchant,
         "description": row.description,
         "amount_minor": row.amount_minor,
@@ -89,8 +92,23 @@ def _tx_row_to_dict(row: Transaction) -> dict:
     }
 
 
-def _load_user_tx_records(db: Session, user_id: str) -> list[TxRecord]:
-    rows = db.scalars(select(Transaction).where(Transaction.user_id == user_id)).all()
+def _resolve_user_account(db: Session, user_id: str, account_id: str | None) -> Account | None:
+    if not account_id or account_id == "all":
+        return None
+    acc = db.scalar(
+        select(Account).where(Account.id == account_id, Account.user_id == user_id, Account.is_active.is_(True))
+    )
+    if acc is None:
+        raise HTTPException(status_code=404, detail="Account not found.")
+    return acc
+
+
+def _load_user_tx_records(db: Session, user_id: str, account_id: str | None = None) -> list[TxRecord]:
+    stmt = select(Transaction).where(Transaction.user_id == user_id)
+    if account_id and account_id != "all":
+        _resolve_user_account(db, user_id, account_id)
+        stmt = stmt.where(Transaction.account_id == account_id)
+    rows = db.scalars(stmt).all()
     return [_to_tx_record(r) for r in rows]
 
 
@@ -104,7 +122,23 @@ def _get_user_profile(db: Session, user_id: str) -> UserProfile:
     return prof
 
 
-def _compute_available_balance(profile: UserProfile, records: list[TxRecord]) -> int:
+def _compute_available_balance(
+    db: Session,
+    profile: UserProfile,
+    user_id: str,
+    records: list[TxRecord],
+    account_id: str | None = None,
+) -> int:
+    if account_id and account_id != "all":
+        acc = _resolve_user_account(db, user_id, account_id)
+        return acc.current_balance_minor if acc else 0
+
+    accounts = db.scalars(
+        select(Account).where(Account.user_id == user_id, Account.is_active.is_(True))
+    ).all()
+    if accounts:
+        return sum(a.current_balance_minor for a in accounts)
+
     income = sum(t.amount_minor for t in records if t.transaction_type == "income")
     expense = sum(t.amount_minor for t in records if t.transaction_type == "expense")
     if income == 0 and expense == 0:
@@ -201,6 +235,7 @@ def complete_onboarding(
 def list_transactions(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
+    account_id: str | None = None,
     search: str | None = None,
     category: str | None = None,
     payment_method: str | None = None,
@@ -210,7 +245,7 @@ def list_transactions(
     end_date: date | None = None,
     limit: int = Query(default=100, ge=1, le=500),
 ) -> dict:
-    records = _load_user_tx_records(db, user.id)
+    records = _load_user_tx_records(db, user.id, account_id=account_id)
     filtered = filter_transactions(
         records,
         search=search,
@@ -226,6 +261,7 @@ def list_transactions(
         "items": [
             {
                 "id": t.id,
+                "account_id": t.account_id,
                 "merchant": t.merchant,
                 "description": t.description,
                 "amount_minor": t.amount_minor,
@@ -248,10 +284,13 @@ def create_transaction(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
+    acc = _resolve_user_account(db, user.id, payload.account_id) if payload.account_id else None
+    source_name = acc.account_name if acc else payload.source_name
     category = payload.category_name or infer_category(payload.merchant, payload.description, payload.transaction_type)
     tx = Transaction(
         id=str(uuid.uuid4()),
         user_id=user.id,
+        account_id=acc.id if acc else None,
         merchant=payload.merchant,
         description=payload.description,
         amount_minor=payload.amount_minor,
@@ -259,11 +298,16 @@ def create_transaction(
         transaction_type=payload.transaction_type,
         category_name=category,
         payment_method=payload.payment_method,
-        source_name=payload.source_name,
+        source_name=source_name,
         transaction_date=payload.transaction_date,
         notes=payload.notes,
     )
     db.add(tx)
+    if acc is not None:
+        if payload.transaction_type == "income":
+            acc.current_balance_minor += payload.amount_minor
+        else:
+            acc.current_balance_minor -= payload.amount_minor
     db.commit()
     db.refresh(tx)
     return _tx_row_to_dict(tx)
@@ -295,6 +339,13 @@ def delete_transaction(
     tx = db.scalar(select(Transaction).where(Transaction.id == tx_id, Transaction.user_id == user.id))
     if tx is None:
         raise HTTPException(status_code=404, detail="Transaction not found.")
+    if tx.account_id:
+        acc = db.scalar(select(Account).where(Account.id == tx.account_id, Account.user_id == user.id))
+        if acc is not None:
+            if tx.transaction_type == "income":
+                acc.current_balance_minor -= tx.amount_minor
+            else:
+                acc.current_balance_minor += tx.amount_minor
     db.delete(tx)
     db.commit()
     return {"deleted": True, "id": tx_id}
@@ -370,9 +421,10 @@ def confirm_transactions_import(
 def get_analytics_overview(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
+    account_id: str | None = None,
 ) -> dict:
     prof = _get_user_profile(db, user.id)
-    records = _load_user_tx_records(db, user.id)
+    records = _load_user_tx_records(db, user.id, account_id=account_id)
     goals_rows = db.scalars(select(SavingsGoal).where(SavingsGoal.user_id == user.id)).all()
     raw_goals = [
         {
@@ -387,7 +439,7 @@ def get_analytics_overview(
     ]
     rec_rows = db.scalars(select(RecurringPayment).where(RecurringPayment.user_id == user.id)).all()
     overrides = {r.merchant.lower(): r.status for r in rec_rows}
-    avail = _compute_available_balance(prof, records)
+    avail = _compute_available_balance(db, prof, user.id, records, account_id=account_id)
     overview = build_overview_payload(
         records=records,
         monthly_allowance_minor=prof.monthly_allowance_minor,
@@ -397,6 +449,24 @@ def get_analytics_overview(
         recurring_overrides=overrides,
     )
     overview["profile"] = get_profile(user, db)
+    accounts = db.scalars(
+        select(Account).where(Account.user_id == user.id, Account.is_active.is_(True)).order_by(Account.created_at.asc())
+    ).all()
+    overview["accounts"] = [
+        {
+            "id": a.id,
+            "bank_name": a.bank_name,
+            "bank_code": a.bank_code,
+            "account_name": a.account_name,
+            "account_type": a.account_type,
+            "masked_number": a.masked_number,
+            "last_four": a.last_four,
+            "current_balance_minor": a.current_balance_minor,
+            "currency": a.currency,
+        }
+        for a in accounts
+    ]
+    overview["selected_account_id"] = account_id if (account_id and account_id != "all") else "all"
     unread = db.scalars(
         select(Notification).where(Notification.user_id == user.id, Notification.read_at.is_(None))
     ).all()
@@ -408,8 +478,9 @@ def get_analytics_overview(
 def get_analytics_categories(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
+    account_id: str | None = None,
 ) -> list[dict]:
-    records = _load_user_tx_records(db, user.id)
+    records = _load_user_tx_records(db, user.id, account_id=account_id)
     return compute_category_breakdown(records, "expense")
 
 
@@ -417,8 +488,9 @@ def get_analytics_categories(
 def get_analytics_trends(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
+    account_id: str | None = None,
 ) -> dict:
-    records = _load_user_tx_records(db, user.id)
+    records = _load_user_tx_records(db, user.id, account_id=account_id)
     return {
         "daily": compute_daily_spending(records, days=30),
         "monthly": compute_monthly_trends(records, months=6),
@@ -430,8 +502,9 @@ def get_analytics_trends(
 def get_analytics_insights(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
+    account_id: str | None = None,
 ) -> list[dict]:
-    overview = get_analytics_overview(user, db)
+    overview = get_analytics_overview(user, db, account_id=account_id)
     return overview["insights"]
 
 
@@ -439,11 +512,12 @@ def get_analytics_insights(
 def get_forecast(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
+    account_id: str | None = None,
 ) -> dict:
     prof = _get_user_profile(db, user.id)
-    records = _load_user_tx_records(db, user.id)
+    records = _load_user_tx_records(db, user.id, account_id=account_id)
     recurring = detect_recurring_payments(records)
-    avail = _compute_available_balance(prof, records)
+    avail = _compute_available_balance(db, prof, user.id, records, account_id=account_id)
     return compute_allowance_forecast(
         records=records,
         monthly_allowance_minor=prof.monthly_allowance_minor,
@@ -457,8 +531,9 @@ def get_forecast(
 def get_recurring(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
+    account_id: str | None = None,
 ) -> list[dict]:
-    records = _load_user_tx_records(db, user.id)
+    records = _load_user_tx_records(db, user.id, account_id=account_id)
     detected = detect_recurring_payments(records)
     overrides = {
         r.merchant.lower(): r.status
@@ -601,7 +676,7 @@ def evaluate_simulator(
     goals = list_goals(user, db)
     active_goals = [g for g in goals if g["status"] == "active"]
     savings_commitments = sum(g["required_monthly_minor"] for g in active_goals)
-    avail = _compute_available_balance(prof, records)
+    avail = _compute_available_balance(db, prof, user.id, records)
 
     return evaluate_purchase_affordability(
         purchase_name=payload.purchase_name,

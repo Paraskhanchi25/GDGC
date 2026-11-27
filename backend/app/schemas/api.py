@@ -14,6 +14,7 @@ class ProfileUpdate(BaseModel):
 
 
 class TransactionCreate(BaseModel):
+    account_id: str | None = None
     merchant: str = Field(min_length=1, max_length=160)
     description: str = Field(default="", max_length=255)
     amount_minor: int = Field(gt=0)
@@ -24,6 +25,21 @@ class TransactionCreate(BaseModel):
     source_name: str = Field(default="Primary Bank", max_length=80)
     transaction_date: date
     notes: str | None = None
+
+
+class AccountOtpSendRequest(BaseModel):
+    bank_code: str = Field(min_length=2, max_length=32)
+    account_type: str = Field(pattern="^(Savings Account|Current Account)$")
+    disclosure_accepted: bool
+
+
+class AccountOtpVerifyRequest(BaseModel):
+    challenge_id: str = Field(min_length=1, max_length=64)
+    otp_code: str = Field(min_length=6, max_length=6, pattern="^[0-9]{6}$")
+
+
+class AccountOtpResendRequest(BaseModel):
+    challenge_id: str = Field(min_length=1, max_length=64)
 
 
 class TransactionUpdate(BaseModel):

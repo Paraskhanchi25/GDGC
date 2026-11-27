@@ -17,6 +17,7 @@ class TxRecord:
     source_name: str
     transaction_date: date
     notes: str | None = None
+    account_id: str | None = None
 
 
 def normalize_merchant_key(merchant: str) -> str:

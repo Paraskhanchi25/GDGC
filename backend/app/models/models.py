@@ -57,14 +57,43 @@ class UserProfile(Base):
 
 class Account(Base):
     __tablename__ = "accounts"
+    __table_args__ = (
+        Index("ix_accounts_user_last_four", "user_id", "last_four"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), index=True)
     account_name: Mapped[str] = mapped_column(String(120), nullable=False)
-    account_type: Mapped[str] = mapped_column(String(48), nullable=False)  # bank, upi, wallet, card, cash
+    account_type: Mapped[str] = mapped_column(String(48), nullable=False)  # Savings Account, Current Account
     provider: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    bank_name: Mapped[str] = mapped_column(String(100), default="Primary Bank")
+    bank_code: Mapped[str] = mapped_column(String(32), default="pulse")
+    masked_number: Mapped[str] = mapped_column(String(24), default="•••• 0000")
+    last_four: Mapped[str] = mapped_column(String(4), default="0000")
+    opening_balance_minor: Mapped[int] = mapped_column(BigInteger, default=0)
+    current_balance_minor: Mapped[int] = mapped_column(BigInteger, default=0)
+    behavior_profile: Mapped[str] = mapped_column(String(48), default="balanced")
+    preparation_status: Mapped[str] = mapped_column(String(24), default="active")
+    disclosure_accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     currency: Mapped[str] = mapped_column(String(8), default="INR")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AccountVerificationChallenge(Base):
+    __tablename__ = "account_verification_challenges"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    bank_code: Mapped[str] = mapped_column(String(32), nullable=False)
+    bank_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    account_type: Mapped[str] = mapped_column(String(48), nullable=False)
+    otp_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    max_attempts: Mapped[int] = mapped_column(Integer, default=5)
+    status: Mapped[str] = mapped_column(String(24), default="pending")  # pending, verified, preparing, active, expired, failed
+    account_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("accounts.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -84,6 +113,7 @@ class Transaction(Base):
     __table_args__ = (
         Index("ix_transactions_user_date", "user_id", "transaction_date"),
         Index("ix_transactions_user_category", "user_id", "category_id"),
+        Index("ix_transactions_account_id", "account_id"),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)

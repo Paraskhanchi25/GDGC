@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from app.api.accounts import router as accounts_router
 from app.api.v1 import router as v1_router
 from app.core.config import get_settings
 from app.core.logging import request_id_ctx, setup_logging
@@ -87,4 +88,5 @@ def health_check() -> dict:
     return {"status": "ok"}
 
 
+app.include_router(accounts_router)
 app.include_router(v1_router)

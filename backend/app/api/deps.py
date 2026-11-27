@@ -158,6 +158,7 @@ def build_overview_payload(
             "category_name": t.category_name,
             "payment_method": t.payment_method,
             "source_name": t.source_name,
+            "account_id": t.account_id,
             "transaction_date": t.transaction_date.isoformat(),
             "notes": t.notes,
         }

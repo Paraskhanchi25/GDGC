@@ -7,7 +7,7 @@ import { AppShell } from "@/components/app-shell";
 import { ListSkeleton } from "@/components/skeletons";
 import { apiFetch } from "@/lib/api";
 import { formatINR, paiseToRupees, rupeesToPaise } from "@/lib/format";
-import type { Transaction } from "@/types/pulse";
+import type { LinkedAccount, Transaction } from "@/types/pulse";
 
 const CATEGORIES = [
   "Food",
@@ -30,6 +30,7 @@ export default function TransactionsPage() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
+  const [accountFilter, setAccountFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [methodFilter, setMethodFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -40,6 +41,7 @@ export default function TransactionsPage() {
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [formState, setFormState] = useState({
+    account_id: "",
     merchant: "",
     description: "",
     amountRupees: "",
@@ -57,6 +59,7 @@ export default function TransactionsPage() {
   const [importSummary, setImportSummary] = useState<string | null>(null);
 
   const queryParams = new URLSearchParams();
+  if (accountFilter !== "all") queryParams.set("account_id", accountFilter);
   if (search) queryParams.set("search", search);
   if (categoryFilter !== "all") queryParams.set("category", categoryFilter);
   if (methodFilter !== "all") queryParams.set("payment_method", methodFilter);
@@ -64,8 +67,13 @@ export default function TransactionsPage() {
   if (startDate) queryParams.set("start_date", startDate);
   if (endDate) queryParams.set("end_date", endDate);
 
+  const { data: accountsData } = useQuery<{ accounts: LinkedAccount[] }>({
+    queryKey: ["accounts"],
+    queryFn: () => apiFetch("/api/v1/accounts"),
+  });
+
   const { data, isLoading, error, refetch } = useQuery<{ total: number; items: Transaction[] }>({
-    queryKey: ["transactions", search, categoryFilter, methodFilter, typeFilter, startDate, endDate],
+    queryKey: ["transactions", accountFilter, search, categoryFilter, methodFilter, typeFilter, startDate, endDate],
     queryFn: () => apiFetch(`/api/v1/transactions?${queryParams.toString()}`),
   });
 
@@ -73,6 +81,7 @@ export default function TransactionsPage() {
     mutationFn: async () => {
       setFormError(null);
       const payload = {
+        account_id: formState.account_id || null,
         merchant: formState.merchant,
         description: formState.description,
         amount_minor: rupeesToPaise(formState.amountRupees),
@@ -118,6 +127,7 @@ export default function TransactionsPage() {
     setEditingTx(null);
     setFormError(null);
     setFormState({
+      account_id: accountFilter !== "all" ? accountFilter : accountsData?.accounts?.[0]?.id || "",
       merchant: "",
       description: "",
       amountRupees: "",
@@ -135,6 +145,7 @@ export default function TransactionsPage() {
     setEditingTx(tx);
     setFormError(null);
     setFormState({
+      account_id: tx.account_id || "",
       merchant: tx.merchant,
       description: tx.description,
       amountRupees: String(paiseToRupees(tx.amount_minor)),
@@ -276,7 +287,7 @@ export default function TransactionsPage() {
         )}
 
         {/* Filters */}
-        <div className="pulse-card grid gap-3 rounded-2xl p-4 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="pulse-card grid gap-3 rounded-2xl p-4 sm:grid-cols-2 lg:grid-cols-7">
           <div className="relative lg:col-span-2">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--muted-text)]" />
             <input
@@ -286,6 +297,19 @@ export default function TransactionsPage() {
               className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] py-2 pl-9 pr-3 text-xs text-[var(--espresso)] outline-none focus:border-[var(--copper)]"
             />
           </div>
+          <select
+            value={accountFilter}
+            onChange={(e) => setAccountFilter(e.target.value)}
+            aria-label="Filter by account"
+            className="rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-2.5 py-2 text-xs text-[var(--espresso)]"
+          >
+            <option value="all">All accounts</option>
+            {accountsData?.accounts?.map((acc) => (
+              <option key={acc.id} value={acc.id}>
+                {acc.bank_name} {acc.masked_number}
+              </option>
+            ))}
+          </select>
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}

@@ -195,3 +195,117 @@ def test_cross_user_data_isolation(tmp_path):
     with pytest.raises(HTTPException) as exc_file:
         storage.read_file(user_b.id, "uploads/transactions", "secret.csv")
     assert exc_file.value.status_code == 404
+
+
+def test_multi_bank_otp_isolation_and_date_bounds(monkeypatch):
+    from app.api import accounts as accounts_api
+    from app.api.v1 import get_analytics_overview
+    from app.financial.activity_engine import HISTORY_END, HISTORY_START
+    from app.models.models import AccountVerificationChallenge
+    from app.schemas.api import AccountOtpSendRequest, AccountOtpVerifyRequest
+
+    sent_codes: list[str] = []
+
+    def fake_send_otp_email(to_email, otp_code, bank_name, account_type, recipient_name="there"):
+        sent_codes.append(otp_code)
+        return {"sent": True}
+
+    monkeypatch.setattr(accounts_api, "send_otp_email", fake_send_otp_email)
+    # Bypass cooldown check for rapid sequential test creations
+    monkeypatch.setattr(accounts_api, "OTP_COOLDOWN_SECONDS", 0)
+
+    db = _make_memory_db()
+    user_a = get_current_user(
+        {"uid": "uid-multi-a", "email": "multi.a@example.com", "email_verified": True, "name": "Student A"},
+        db,
+    )
+    user_b = get_current_user(
+        {"uid": "uid-multi-b", "email": "multi.b@example.com", "email_verified": True, "name": "Student B"},
+        db,
+    )
+
+    # Agreement required before OTP send
+    with pytest.raises(HTTPException) as exc_agree:
+        accounts_api.send_account_otp(
+            AccountOtpSendRequest(bank_code="hdfc", account_type="Savings Account", disclosure_accepted=False),
+            user=user_a,
+            db=db,
+        )
+    assert exc_agree.value.status_code == 400
+
+    # Link HDFC, ICICI, and SBI for User A
+    created_accounts = []
+    for bank in ("hdfc", "icici", "sbi"):
+        send_res = accounts_api.send_account_otp(
+            AccountOtpSendRequest(bank_code=bank, account_type="Savings Account", disclosure_accepted=True),
+            user=user_a,
+            db=db,
+        )
+        cid = send_res["challenge_id"]
+        code = sent_codes[-1]
+
+        # Wrong OTP rejected
+        with pytest.raises(HTTPException) as exc_bad:
+            accounts_api.verify_account_otp(
+                AccountOtpVerifyRequest(challenge_id=cid, otp_code="000000" if code != "000000" else "999999"),
+                user=user_a,
+                db=db,
+            )
+        assert exc_bad.value.status_code == 400
+
+        # Valid OTP creates account
+        ver_res = accounts_api.verify_account_otp(
+            AccountOtpVerifyRequest(challenge_id=cid, otp_code=code),
+            user=user_a,
+            db=db,
+        )
+        assert ver_res["status"] == "ready"
+        acc = ver_res["account"]
+        created_accounts.append(acc)
+
+        # Idempotent retry does not create duplicate
+        retry_res = accounts_api.verify_account_otp(
+            AccountOtpVerifyRequest(challenge_id=cid, otp_code=code),
+            user=user_a,
+            db=db,
+        )
+        assert retry_res["account"]["id"] == acc["id"]
+
+    # Unique last-four suffixes
+    suffixes = {a["last_four"] for a in created_accounts}
+    assert len(suffixes) == 3
+
+    hdfc_acc, icici_acc, sbi_acc = created_accounts
+
+    # Verify strict account isolation + date bounds (Jan 1 -> Nov 27, 2026)
+    hdfc_txs = list_transactions(user=user_a, db=db, account_id=hdfc_acc["id"], limit=500)["items"]
+    icici_txs = list_transactions(user=user_a, db=db, account_id=icici_acc["id"], limit=500)["items"]
+    assert len(hdfc_txs) > 20
+    assert len(icici_txs) > 20
+    assert all(t["account_id"] == hdfc_acc["id"] for t in hdfc_txs)
+    assert all(t["account_id"] == icici_acc["id"] for t in icici_txs)
+
+    for tx in hdfc_txs + icici_txs:
+        tx_dt = date.fromisoformat(tx["transaction_date"])
+        assert HISTORY_START <= tx_dt <= HISTORY_END
+
+    assert any(t["transaction_date"] == "2026-11-27" for t in hdfc_txs)
+    assert any(t["transaction_date"] == "2026-11-27" for t in icici_txs)
+
+    # Aggregate vs individual overview balance
+    all_ov = get_analytics_overview(user=user_a, db=db, account_id="all")
+    hdfc_ov = get_analytics_overview(user=user_a, db=db, account_id=hdfc_acc["id"])
+    assert hdfc_ov["available_balance_minor"] == hdfc_acc["current_balance_minor"]
+    assert all_ov["available_balance_minor"] == (
+        hdfc_acc["current_balance_minor"] + icici_acc["current_balance_minor"] + sbi_acc["current_balance_minor"]
+    )
+
+    # Cross-user isolation on account endpoints
+    with pytest.raises(HTTPException) as exc_other_acc:
+        list_transactions(user=user_b, db=db, account_id=hdfc_acc["id"], limit=100)
+    assert exc_other_acc.value.status_code == 404
+
+    with pytest.raises(HTTPException) as exc_other_del:
+        accounts_api.remove_account(hdfc_acc["id"], user=user_b, db=db)
+    assert exc_other_del.value.status_code == 404
+

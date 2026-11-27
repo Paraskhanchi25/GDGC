@@ -33,7 +33,13 @@ export default function LoginPage() {
     try {
       await signInWithGoogle();
       try {
-        await apiFetch("/api/v1/auth/sync", { method: "POST" });
+        const syncRes = await apiFetch<{ profile?: { onboarding_completed?: boolean } }>("/api/v1/auth/sync", {
+          method: "POST",
+        });
+        if (syncRes?.profile && syncRes.profile.onboarding_completed === false) {
+          router.replace("/onboarding");
+          return;
+        }
       } catch {
         // Keep session active; dashboard handles offline retry cleanly
       }

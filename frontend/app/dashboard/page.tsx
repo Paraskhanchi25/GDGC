@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -13,8 +14,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { AlertTriangle, ArrowUpRight, CheckCircle2, Info, RotateCcw } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, CheckCircle2, Info, Landmark, Plus, RotateCcw, X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { LinkBankFlow } from "@/components/link-bank-flow";
 import { usePulseAuth } from "@/components/providers";
 import { DashboardSkeleton } from "@/components/skeletons";
 import { apiFetch } from "@/lib/api";
@@ -24,11 +26,21 @@ import type { OverviewData } from "@/types/pulse";
 export default function DashboardPage() {
   const { user } = usePulseAuth();
   const firstName = user?.displayName?.split(" ")[0] || "there";
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+
+  const overviewUrl =
+    selectedAccountId === "all"
+      ? "/api/v1/analytics/overview"
+      : `/api/v1/analytics/overview?account_id=${encodeURIComponent(selectedAccountId)}`;
 
   const { data, isLoading, error, refetch } = useQuery<OverviewData>({
-    queryKey: ["overview"],
-    queryFn: () => apiFetch<OverviewData>("/api/v1/analytics/overview"),
+    queryKey: ["overview", selectedAccountId],
+    queryFn: () => apiFetch<OverviewData>(overviewUrl),
   });
+
+  const activeAccount = data?.accounts?.find((a) => a.id === selectedAccountId);
+  const scopeLabel = activeAccount ? `${activeAccount.bank_name} ${activeAccount.masked_number}` : "All accounts";
 
   return (
     <AppShell unreadCount={data?.unread_notifications ?? 0}>
@@ -70,6 +82,80 @@ export default function DashboardPage() {
 
         {data && (
           <>
+            {/* Multi-Account Selector Strip */}
+            <div className="space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--brown-grey)]">
+                    Your accounts
+                  </h2>
+                  <span className="rounded-full bg-[var(--cream)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--espresso)]">
+                    Viewing: {scopeLabel}
+                  </span>
+                </div>
+                <span
+                  title="Account activity is prepared within PULSE so you can explore your financial picture without sharing bank credentials."
+                  className="inline-flex items-center gap-1 text-[11px] text-[var(--muted-text)]"
+                >
+                  <Info className="h-3.5 w-3.5" /> Prepared within PULSE
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedAccountId("all")}
+                  className={`flex min-w-[160px] flex-col rounded-2xl border px-4 py-3 text-left transition ${
+                    selectedAccountId === "all"
+                      ? "border-[var(--copper)] bg-[var(--white)] ring-1 ring-[var(--copper)]"
+                      : "border-[var(--border)] bg-[var(--elevated-ivory)] hover:bg-[var(--white)]"
+                  }`}
+                >
+                  <span className="text-[11px] font-medium text-[var(--brown-grey)]">All accounts</span>
+                  <span className="mt-1 text-sm font-semibold tabular-nums text-[var(--espresso)]">
+                    {data.accounts && data.accounts.length > 0
+                      ? formatINR(data.accounts.reduce((acc, a) => acc + a.current_balance_minor, 0))
+                      : formatINR(data.available_balance_minor)}
+                  </span>
+                </button>
+
+                {data.accounts?.map((acc) => {
+                  const selected = selectedAccountId === acc.id;
+                  return (
+                    <button
+                      key={acc.id}
+                      type="button"
+                      onClick={() => setSelectedAccountId(acc.id)}
+                      className={`flex min-w-[190px] flex-col rounded-2xl border px-4 py-3 text-left transition ${
+                        selected
+                          ? "border-[var(--copper)] bg-[var(--white)] ring-1 ring-[var(--copper)]"
+                          : "border-[var(--border)] bg-[var(--elevated-ivory)] hover:bg-[var(--white)]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-[var(--espresso)]">{acc.bank_name}</span>
+                        <Landmark className="h-3.5 w-3.5 text-[var(--copper)]" />
+                      </div>
+                      <span className="mt-0.5 font-mono text-[11px] text-[var(--brown-grey)]">
+                        {acc.masked_number} · {acc.account_type}
+                      </span>
+                      <span className="mt-1 text-xs font-semibold tabular-nums text-[var(--espresso)]">
+                        {formatINR(acc.current_balance_minor)}
+                      </span>
+                    </button>
+                  );
+                })}
+
+                <button
+                  type="button"
+                  onClick={() => setLinkModalOpen(true)}
+                  className="flex min-w-[175px] items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-4 py-3 text-xs font-medium text-[var(--deep-copper)] transition hover:border-[var(--copper)] hover:bg-[var(--white)]"
+                >
+                  <Plus className="h-4 w-4" /> Link another account
+                </button>
+              </div>
+            </div>
+
             {/* Top KPI Row with deliberate hierarchy */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-2xl border border-[var(--border-strong)] bg-[var(--espresso)] p-5 text-[var(--white)] shadow-sm">
@@ -368,6 +454,27 @@ export default function DashboardPage() {
               )}
             </div>
           </>
+        )}
+        {linkModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#29231F]/40 p-4 backdrop-blur-sm">
+            <div className="relative w-full max-w-xl">
+              <button
+                type="button"
+                onClick={() => setLinkModalOpen(false)}
+                aria-label="Close link account"
+                className="absolute right-4 top-4 z-10 rounded-full bg-[var(--elevated-ivory)] p-1.5 text-[var(--brown-grey)] hover:text-[var(--espresso)]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <LinkBankFlow
+                skipIntro={true}
+                onComplete={(acc) => {
+                  setLinkModalOpen(false);
+                  setSelectedAccountId(acc.id);
+                }}
+              />
+            </div>
+          </div>
         )}
       </div>
     </AppShell>

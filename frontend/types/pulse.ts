@@ -1,5 +1,20 @@
+export interface LinkedAccount {
+  id: string;
+  bank_name: string;
+  bank_code: string;
+  account_name: string;
+  account_type: string;
+  masked_number: string;
+  last_four: string;
+  current_balance_minor: number;
+  opening_balance_minor?: number;
+  currency: string;
+  transaction_count?: number;
+}
+
 export interface Transaction {
   id: string;
+  account_id?: string | null;
   merchant: string;
   description: string;
   amount_minor: number;
@@ -144,6 +159,8 @@ export interface OverviewData {
   goals: SavingsGoal[];
   insights: FinancialInsight[];
   recent_transactions: Transaction[];
+  accounts?: LinkedAccount[];
+  selected_account_id?: string;
   unread_notifications: number;
 }
 
