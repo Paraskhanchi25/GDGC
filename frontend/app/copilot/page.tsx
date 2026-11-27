@@ -72,26 +72,26 @@ export default function CopilotPage() {
     <AppShell>
       <div className="flex h-[calc(100vh-8rem)] flex-col space-y-4">
         <div>
-          <p className="text-xs uppercase tracking-widest text-[var(--amber)]">Assistant</p>
-          <h1 className="font-serif-display text-3xl text-[var(--foreground)]">Financial Copilot</h1>
-          <p className="mt-1 text-xs text-[var(--foreground-secondary)]">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--plum)]">Assistant</p>
+          <h1 className="font-serif-display text-3xl text-[var(--espresso)]">Financial Copilot</h1>
+          <p className="mt-1 text-xs text-[var(--brown-grey)]">
             Grounded strictly in your verified transactions, forecast, and savings goals.
           </p>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+        <div className="pulse-card-lavender flex-1 space-y-4 overflow-y-auto rounded-2xl p-5">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
-              <div className="surface-metallic flex h-12 w-12 items-center justify-center rounded-xl">
-                <Sparkles className="h-5 w-5 text-[var(--champagne)]" />
+              <div className="pulse-card flex h-12 w-12 items-center justify-center rounded-2xl">
+                <Sparkles className="h-5 w-5 text-[var(--plum)]" />
               </div>
-              <p className="mt-4 text-sm font-medium text-[var(--foreground)]">Ask a question about your finances</p>
+              <p className="mt-4 text-sm font-medium text-[var(--espresso)]">Ask a question about your finances</p>
               <div className="mt-4 flex max-w-lg flex-wrap justify-center gap-2">
                 {SUGGESTED_QUESTIONS.map((sq) => (
                   <button
                     key={sq}
                     onClick={() => submitQuestion(sq)}
-                    className="rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-1.5 text-xs text-[var(--foreground-muted)] hover:bg-[var(--surface-raised)]"
+                    className="rounded-xl border border-[var(--lavender)] bg-[var(--white)] px-3 py-1.5 text-xs text-[var(--espresso)] transition hover:bg-[var(--lavender-tint)]"
                   >
                     {sq}
                   </button>
@@ -102,16 +102,16 @@ export default function CopilotPage() {
             messages.map((m, idx) => (
               <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-xl rounded-xl px-4 py-3 text-sm leading-relaxed ${
+                  className={`max-w-xl rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                     m.role === "user"
-                      ? "bg-[var(--accent)] text-[var(--background)]"
+                      ? "bg-[var(--espresso)] text-[var(--white)]"
                       : m.role === "system"
-                      ? "border border-[var(--warning)]/50 bg-[var(--background-elevated)] text-[var(--foreground-muted)]"
-                      : "border border-[var(--border)] bg-[var(--background-elevated)] text-[var(--foreground)]"
+                      ? "border border-[var(--warning-text)]/20 bg-[var(--warning-bg)] text-[var(--warning-text)]"
+                      : "border border-[var(--lavender)] bg-[var(--white)] text-[var(--espresso)]"
                   }`}
                 >
                   {m.role === "system" && (
-                    <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[var(--warning)]">
+                    <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold">
                       <AlertCircle className="h-3.5 w-3.5" /> Assistant Unavailable
                     </div>
                   )}
@@ -121,7 +121,7 @@ export default function CopilotPage() {
             ))
           )}
           {chatMutation.isPending && (
-            <p className="text-xs text-[var(--foreground-secondary)]">Reviewing your financial records...</p>
+            <p className="text-xs text-[var(--brown-grey)]">Reviewing your financial records...</p>
           )}
         </div>
 
@@ -136,12 +136,12 @@ export default function CopilotPage() {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Ask about spending, recurring bills, or savings..."
-            className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
+            className="flex-1 rounded-xl border border-[var(--border-strong)] bg-[var(--white)] px-4 py-3 text-sm text-[var(--espresso)] outline-none focus:border-[var(--plum)]"
           />
           <button
             type="submit"
             disabled={chatMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-5 py-3 text-sm font-medium text-[var(--background)] transition hover:bg-[var(--accent-hover)] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl bg-[var(--espresso)] px-5 py-3 text-sm font-medium text-[var(--white)] transition hover:bg-[var(--deep-copper)] disabled:opacity-50"
           >
             <Send className="h-4 w-4" />
             Ask

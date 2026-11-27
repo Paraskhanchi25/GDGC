@@ -51,7 +51,6 @@ export default function TransactionsPage() {
     notes: "",
   });
 
-  // CSV Import state
   const [importOpen, setImportOpen] = useState(false);
   const [importPreview, setImportPreview] = useState<any>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -192,8 +191,8 @@ export default function TransactionsPage() {
       <div className="space-y-6">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
-            <p className="text-xs uppercase tracking-widest text-[var(--amber)]">Ledger</p>
-            <h1 className="font-serif-display text-3xl text-[var(--foreground)]">Transactions</h1>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--copper)]">Ledger</p>
+            <h1 className="font-serif-display text-3xl text-[var(--espresso)]">Transactions</h1>
           </div>
           <div className="flex flex-wrap gap-2">
             <button
@@ -202,14 +201,14 @@ export default function TransactionsPage() {
                 setImportSummary(null);
                 setImportError(null);
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2 text-xs font-medium text-[var(--foreground-muted)] hover:bg-[var(--surface-raised)]"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--white)] px-3.5 py-2 text-xs font-medium text-[var(--espresso)] hover:bg-[var(--cream)]"
             >
               <Upload className="h-3.5 w-3.5" />
               Import CSV
             </button>
             <button
               onClick={openAddModal}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3.5 py-2 text-xs font-medium text-[var(--background)] hover:bg-[var(--accent-hover)]"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--copper)] px-3.5 py-2 text-xs font-medium text-[var(--white)] hover:bg-[var(--deep-copper)]"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Transaction
@@ -217,25 +216,24 @@ export default function TransactionsPage() {
           </div>
         </div>
 
-        {/* CSV Import Panel */}
         {importOpen && (
-          <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+          <div className="pulse-card space-y-4 rounded-2xl p-5">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-semibold text-[var(--foreground)]">CSV Transaction Import</h2>
-                <p className="text-xs text-[var(--foreground-secondary)]">
+                <h2 className="text-sm font-semibold text-[var(--espresso)]">CSV Transaction Import</h2>
+                <p className="text-xs text-[var(--brown-grey)]">
                   Upload a CSV with columns for date, merchant, amount, and type (expense or income).
                 </p>
               </div>
-              <button onClick={() => setImportOpen(false)} aria-label="Close import" className="text-[var(--foreground-secondary)] hover:text-[var(--foreground)]">
+              <button onClick={() => setImportOpen(false)} aria-label="Close import" className="text-[var(--brown-grey)] hover:text-[var(--espresso)]">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <input type="file" accept=".csv,text/csv" onChange={handleCsvUpload} className="block text-xs text-[var(--foreground-muted)]" />
-            {importError && <p className="text-xs text-[var(--danger)]">{importError}</p>}
+            <input type="file" accept=".csv,text/csv" onChange={handleCsvUpload} className="block text-xs text-[var(--brown-grey)]" />
+            {importError && <p className="text-xs text-[var(--error-text)]">{importError}</p>}
             {importSummary && <p className="text-xs font-medium text-[var(--positive)]">{importSummary}</p>}
             {importPreview && (
-              <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] p-4">
+              <div className="pulse-card-ivory space-y-3 rounded-xl p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                   <span>
                     Valid: <strong>{importPreview.valid_count}</strong> · Duplicates:{" "}
@@ -243,7 +241,7 @@ export default function TransactionsPage() {
                   </span>
                   <button
                     onClick={handleConfirmImport}
-                    className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-[var(--background)]"
+                    className="rounded-xl bg-[var(--copper)] px-3 py-1.5 text-xs font-medium text-[var(--white)]"
                   >
                     Confirm Import
                   </button>
@@ -251,7 +249,7 @@ export default function TransactionsPage() {
                 <div className="max-h-48 overflow-y-auto text-xs">
                   <table className="w-full text-left">
                     <thead>
-                      <tr className="border-b border-[var(--border)] text-[var(--foreground-secondary)]">
+                      <tr className="border-b border-[var(--border)] text-[var(--brown-grey)]">
                         <th className="py-1">Date</th>
                         <th className="py-1">Merchant</th>
                         <th className="py-1">Category</th>
@@ -261,7 +259,7 @@ export default function TransactionsPage() {
                     </thead>
                     <tbody>
                       {importPreview.rows.slice(0, 20).map((r: any) => (
-                        <tr key={r.row_number} className="border-b border-[var(--border-subtle)]">
+                        <tr key={r.row_number} className="border-b border-[var(--border)]">
                           <td className="py-1 tabular-nums">{r.transaction_date}</td>
                           <td className="py-1">{r.merchant}</td>
                           <td className="py-1">{r.category_name}</td>
@@ -278,47 +276,43 @@ export default function TransactionsPage() {
         )}
 
         {/* Filters */}
-        <div className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="pulse-card grid gap-3 rounded-2xl p-4 sm:grid-cols-2 lg:grid-cols-6">
           <div className="relative lg:col-span-2">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--foreground-secondary)]" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--muted-text)]" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search merchant, notes, category..."
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] py-2 pl-9 pr-3 text-xs text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
+              className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] py-2 pl-9 pr-3 text-xs text-[var(--espresso)] outline-none focus:border-[var(--copper)]"
             />
           </div>
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
             aria-label="Filter by category"
-            className="rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-2.5 py-2 text-xs text-[var(--foreground)]"
+            className="rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-2.5 py-2 text-xs text-[var(--espresso)]"
           >
             <option value="all">All Categories</option>
             {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
           <select
             value={methodFilter}
             onChange={(e) => setMethodFilter(e.target.value)}
             aria-label="Filter by payment method"
-            className="rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-2.5 py-2 text-xs text-[var(--foreground)]"
+            className="rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-2.5 py-2 text-xs text-[var(--espresso)]"
           >
             <option value="all">All Methods</option>
             {METHODS.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
+              <option key={m} value={m}>{m}</option>
             ))}
           </select>
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
             aria-label="Filter by type"
-            className="rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-2.5 py-2 text-xs text-[var(--foreground)]"
+            className="rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-2.5 py-2 text-xs text-[var(--espresso)]"
           >
             <option value="all">All Types</option>
             <option value="expense">Expense</option>
@@ -330,74 +324,70 @@ export default function TransactionsPage() {
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               aria-label="Start date"
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-2 py-2 text-xs text-[var(--foreground)]"
+              className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-2 py-2 text-xs text-[var(--espresso)]"
             />
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               aria-label="End date"
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-2 py-2 text-xs text-[var(--foreground)]"
+              className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-2 py-2 text-xs text-[var(--espresso)]"
             />
           </div>
         </div>
 
         {/* List / Table */}
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+        <div className="pulse-card rounded-2xl p-5">
           {isLoading ? (
             <ListSkeleton rows={6} />
           ) : error ? (
-            <div className="flex items-center justify-between text-xs text-[var(--danger)]">
+            <div className="flex items-center justify-between text-xs text-[var(--error-text)]">
               <span>{(error as Error).message}</span>
-              <button onClick={() => refetch()} className="inline-flex items-center gap-1 rounded border border-[var(--border)] px-3 py-1.5 text-[var(--foreground)]">
+              <button onClick={() => refetch()} className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-strong)] px-3 py-1.5 text-[var(--espresso)]">
                 <RotateCcw className="h-3 w-3" /> Retry
               </button>
             </div>
           ) : !data || data.items.length === 0 ? (
             <div className="py-10 text-center">
-              <p className="text-sm text-[var(--foreground-muted)]">No transactions match your current view.</p>
+              <p className="text-sm text-[var(--brown-grey)]">No transactions match your current view.</p>
               <button
                 onClick={openAddModal}
-                className="mt-3 rounded-lg bg-[var(--accent)] px-4 py-2 text-xs font-medium text-[var(--background)]"
+                className="mt-3 rounded-xl bg-[var(--copper)] px-4 py-2 text-xs font-medium text-[var(--white)]"
               >
                 Add your first transaction
               </button>
             </div>
           ) : (
             <>
-              {/* Mobile Responsive Cards */}
               <div className="space-y-3 md:hidden">
                 {data.items.map((tx) => (
-                  <div
-                    key={tx.id}
-                    className="rounded-xl border border-[var(--border-subtle)] bg-[var(--background-elevated)] p-3.5"
-                  >
+                  <div key={tx.id} className="pulse-card-ivory rounded-xl p-3.5">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-sm font-medium text-[var(--foreground)]">{tx.merchant}</p>
-                        <p className="text-[11px] text-[var(--foreground-secondary)]">
+                        <p className="text-sm font-medium text-[var(--espresso)]">{tx.merchant}</p>
+                        <p className="text-[11px] text-[var(--brown-grey)]">
                           {tx.transaction_date} · {tx.category_name} · {tx.payment_method}
                         </p>
                       </div>
                       <span
                         className={`text-sm font-semibold tabular-nums ${
-                          tx.transaction_type === "income" ? "text-[var(--positive)]" : "text-[var(--foreground)]"
+                          tx.transaction_type === "income" ? "text-[var(--positive)]" : "text-[var(--espresso)]"
                         }`}
                       >
                         {tx.transaction_type === "income" ? "+" : "-"}
                         {formatINR(tx.amount_minor)}
                       </span>
                     </div>
-                    <div className="mt-3 flex justify-end gap-3 border-t border-[var(--border-subtle)] pt-2">
+                    <div className="mt-3 flex justify-end gap-3 border-t border-[var(--border)] pt-2">
                       <button
                         onClick={() => openEditModal(tx)}
-                        className="inline-flex items-center gap-1 text-xs text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+                        className="inline-flex items-center gap-1 text-xs text-[var(--brown-grey)] hover:text-[var(--espresso)]"
                       >
                         <Pencil className="h-3.5 w-3.5" /> Edit
                       </button>
                       <button
                         onClick={() => deleteMutation.mutate(tx.id)}
-                        className="inline-flex items-center gap-1 text-xs text-[var(--danger)]"
+                        className="inline-flex items-center gap-1 text-xs text-[var(--error-text)]"
                       >
                         <Trash2 className="h-3.5 w-3.5" /> Delete
                       </button>
@@ -406,11 +396,10 @@ export default function TransactionsPage() {
                 ))}
               </div>
 
-              {/* Desktop Table */}
               <div className="hidden overflow-x-auto md:block">
                 <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="border-b border-[var(--border)] text-[var(--foreground-secondary)]">
+                    <tr className="border-b border-[var(--border)] text-[var(--brown-grey)]">
                       <th className="pb-2.5 font-medium">Date</th>
                       <th className="pb-2.5 font-medium">Merchant</th>
                       <th className="pb-2.5 font-medium">Category</th>
@@ -419,25 +408,25 @@ export default function TransactionsPage() {
                       <th className="pb-2.5 text-right font-medium">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--border-subtle)]">
+                  <tbody className="divide-y divide-[var(--border)]">
                     {data.items.map((tx) => (
                       <tr key={tx.id}>
-                        <td className="py-3 tabular-nums text-[var(--foreground-secondary)]">{tx.transaction_date}</td>
+                        <td className="py-3 tabular-nums text-[var(--brown-grey)]">{tx.transaction_date}</td>
                         <td className="py-3">
-                          <p className="font-medium text-[var(--foreground)]">{tx.merchant}</p>
-                          {tx.description && <p className="text-[11px] text-[var(--foreground-secondary)]">{tx.description}</p>}
+                          <p className="font-medium text-[var(--espresso)]">{tx.merchant}</p>
+                          {tx.description && <p className="text-[11px] text-[var(--brown-grey)]">{tx.description}</p>}
                         </td>
                         <td className="py-3">
-                          <span className="rounded bg-[var(--surface-raised)] px-2 py-0.5 text-[11px] text-[var(--foreground-muted)]">
+                          <span className="rounded-md bg-[var(--cream)] px-2 py-0.5 text-[11px] text-[var(--espresso)]">
                             {tx.category_name}
                           </span>
                         </td>
-                        <td className="py-3 text-[var(--foreground-secondary)]">
+                        <td className="py-3 text-[var(--brown-grey)]">
                           {tx.payment_method} · {tx.source_name}
                         </td>
                         <td
                           className={`py-3 text-right font-semibold tabular-nums ${
-                            tx.transaction_type === "income" ? "text-[var(--positive)]" : "text-[var(--foreground)]"
+                            tx.transaction_type === "income" ? "text-[var(--positive)]" : "text-[var(--espresso)]"
                           }`}
                         >
                           {tx.transaction_type === "income" ? "+" : "-"}
@@ -448,14 +437,14 @@ export default function TransactionsPage() {
                             <button
                               onClick={() => openEditModal(tx)}
                               aria-label="Edit transaction"
-                              className="text-[var(--foreground-secondary)] hover:text-[var(--foreground)]"
+                              className="text-[var(--brown-grey)] hover:text-[var(--espresso)]"
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={() => deleteMutation.mutate(tx.id)}
                               aria-label="Delete transaction"
-                              className="text-[var(--foreground-secondary)] hover:text-[var(--danger)]"
+                              className="text-[var(--brown-grey)] hover:text-[var(--error-text)]"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -472,17 +461,17 @@ export default function TransactionsPage() {
 
         {/* Add / Edit Modal */}
         {modalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-            <div className="surface-metallic w-full max-w-md rounded-2xl p-6">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#29231F]/40 p-4 backdrop-blur-sm">
+            <div className="pulse-card w-full max-w-md rounded-2xl p-6">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-serif-display text-xl text-[var(--foreground)]">
+                <h2 className="font-serif-display text-xl text-[var(--espresso)]">
                   {editingTx ? "Edit Transaction" : "Add Transaction"}
                 </h2>
-                <button onClick={() => setModalOpen(false)} aria-label="Close modal" className="text-[var(--foreground-secondary)]">
+                <button onClick={() => setModalOpen(false)} aria-label="Close modal" className="text-[var(--brown-grey)]">
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              {formError && <p className="mb-3 text-xs text-[var(--danger)]">{formError}</p>}
+              {formError && <p className="mb-3 text-xs text-[var(--error-text)]">{formError}</p>}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -491,17 +480,17 @@ export default function TransactionsPage() {
                 className="space-y-3 text-xs"
               >
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--foreground-muted)]">Merchant</label>
+                  <label className="mb-1 block font-medium text-[var(--espresso)]">Merchant</label>
                   <input
                     required
                     value={formState.merchant}
                     onChange={(e) => setFormState({ ...formState, merchant: e.target.value })}
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-2 text-[var(--foreground)]"
+                    className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-[var(--espresso)]"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block font-medium text-[var(--foreground-muted)]">Amount (INR)</label>
+                    <label className="mb-1 block font-medium text-[var(--espresso)]">Amount (INR)</label>
                     <input
                       required
                       type="number"
@@ -509,17 +498,17 @@ export default function TransactionsPage() {
                       min="1"
                       value={formState.amountRupees}
                       onChange={(e) => setFormState({ ...formState, amountRupees: e.target.value })}
-                      className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-2 text-[var(--foreground)]"
+                      className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-[var(--espresso)]"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block font-medium text-[var(--foreground-muted)]">Type</label>
+                    <label className="mb-1 block font-medium text-[var(--espresso)]">Type</label>
                     <select
                       value={formState.transaction_type}
                       onChange={(e) =>
                         setFormState({ ...formState, transaction_type: e.target.value as "expense" | "income" })
                       }
-                      className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-2 text-[var(--foreground)]"
+                      className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-[var(--espresso)]"
                     >
                       <option value="expense">Expense</option>
                       <option value="income">Income</option>
@@ -528,74 +517,70 @@ export default function TransactionsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block font-medium text-[var(--foreground-muted)]">Category</label>
+                    <label className="mb-1 block font-medium text-[var(--espresso)]">Category</label>
                     <select
                       value={formState.category_name}
                       onChange={(e) => setFormState({ ...formState, category_name: e.target.value })}
-                      className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-2 text-[var(--foreground)]"
+                      className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-[var(--espresso)]"
                     >
                       {CATEGORIES.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
+                        <option key={c} value={c}>{c}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block font-medium text-[var(--foreground-muted)]">Date</label>
+                    <label className="mb-1 block font-medium text-[var(--espresso)]">Date</label>
                     <input
                       required
                       type="date"
                       value={formState.transaction_date}
                       onChange={(e) => setFormState({ ...formState, transaction_date: e.target.value })}
-                      className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-2 text-[var(--foreground)]"
+                      className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-[var(--espresso)]"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block font-medium text-[var(--foreground-muted)]">Payment Method</label>
+                    <label className="mb-1 block font-medium text-[var(--espresso)]">Payment Method</label>
                     <select
                       value={formState.payment_method}
                       onChange={(e) => setFormState({ ...formState, payment_method: e.target.value })}
-                      className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-2 text-[var(--foreground)]"
+                      className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-[var(--espresso)]"
                     >
                       {METHODS.map((m) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
+                        <option key={m} value={m}>{m}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block font-medium text-[var(--foreground-muted)]">Account / Source</label>
+                    <label className="mb-1 block font-medium text-[var(--espresso)]">Account / Source</label>
                     <input
                       value={formState.source_name}
                       onChange={(e) => setFormState({ ...formState, source_name: e.target.value })}
-                      className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-2 text-[var(--foreground)]"
+                      className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-[var(--espresso)]"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--foreground-muted)]">Description</label>
+                  <label className="mb-1 block font-medium text-[var(--espresso)]">Description</label>
                   <input
                     value={formState.description}
                     onChange={(e) => setFormState({ ...formState, description: e.target.value })}
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-2 text-[var(--foreground)]"
+                    className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-[var(--espresso)]"
                   />
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}
-                    className="rounded-lg border border-[var(--border)] px-4 py-2 text-xs text-[var(--foreground-muted)]"
+                    className="rounded-xl border border-[var(--border-strong)] px-4 py-2 text-xs text-[var(--brown-grey)]"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={saveMutation.isPending}
-                    className="rounded-lg bg-[var(--accent)] px-4 py-2 text-xs font-medium text-[var(--background)] disabled:opacity-50"
+                    className="rounded-xl bg-[var(--copper)] px-4 py-2 text-xs font-medium text-[var(--white)] disabled:opacity-50"
                   >
                     {saveMutation.isPending ? "Saving..." : "Save"}
                   </button>

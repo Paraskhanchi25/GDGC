@@ -8,6 +8,7 @@ import {
   Bell,
   Calculator,
   Compass,
+  Globe,
   LayoutDashboard,
   LineChart,
   LogOut,
@@ -59,7 +60,6 @@ export function AppShell({
     }
   }, [authLoading, user, router]);
 
-  // Never flash protected financial UI before Firebase session resolves
   if (authLoading || !user) {
     return <BrandedLoader message="Verifying your session" />;
   }
@@ -83,10 +83,10 @@ export function AppShell({
         key={item.href}
         href={item.href}
         onClick={() => setMobileOpen(false)}
-        className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition ${
+        className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm transition ${
           active
-            ? "bg-[var(--accent)] font-medium text-[var(--background)]"
-            : "text-[var(--foreground-muted)] hover:bg-[var(--surface-raised)] hover:text-[var(--foreground)]"
+            ? "bg-[var(--espresso)] font-medium text-[var(--white)]"
+            : "text-[var(--brown-grey)] hover:bg-[var(--cream)] hover:text-[var(--espresso)]"
         }`}
       >
         <span className="flex items-center gap-3">
@@ -97,8 +97,8 @@ export function AppShell({
           <span
             className={`rounded-full px-1.5 py-0.5 text-[10px] tabular-nums ${
               active
-                ? "bg-[var(--background)] text-[var(--champagne)]"
-                : "bg-[var(--surface-raised)] text-[var(--champagne)]"
+                ? "bg-[var(--copper)] text-[var(--white)]"
+                : "bg-[var(--lavender)] text-[var(--plum)]"
             }`}
           >
             {unreadCount}
@@ -111,34 +111,40 @@ export function AppShell({
   const SidebarContent = () => (
     <div className="flex h-full flex-col justify-between px-4 py-6">
       <div>
-        <Link href="/home" className="mb-7 flex items-center gap-2.5 px-2">
-          <div className="surface-metallic flex h-8 w-8 items-center justify-center rounded-lg">
-            <Compass className="h-4 w-4 text-[var(--champagne)]" />
-          </div>
-          <div>
-            <span className="font-serif-display text-xl tracking-tight text-[var(--foreground)]">PULSE</span>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--foreground-secondary)]">
-              Student Finance
-            </p>
-          </div>
-        </Link>
+        <div className="mb-7 flex items-center justify-between px-2">
+          <Link href="/" className="flex items-center gap-2.5" title="Return to PULSE homepage">
+            <div className="pulse-card flex h-8 w-8 items-center justify-center rounded-xl">
+              <Compass className="h-4 w-4 text-[var(--copper)]" />
+            </div>
+            <div>
+              <span className="font-serif-display text-xl tracking-tight text-[var(--espresso)]">PULSE</span>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--muted-text)]">Student Finance</p>
+            </div>
+          </Link>
+        </div>
 
         <nav aria-label="Primary navigation" className="space-y-1">
           {PRIMARY_NAV.map(renderNavLink)}
         </nav>
 
-        <div className="mt-6 border-t border-[var(--border-subtle)] pt-4">
-          <p className="mb-2 px-3 text-[10px] uppercase tracking-widest text-[var(--foreground-secondary)]">
-            Account
-          </p>
+        <div className="mt-6 border-t border-[var(--border)] pt-4">
+          <p className="mb-2 px-3 text-[10px] uppercase tracking-widest text-[var(--muted-text)]">Account</p>
           <nav aria-label="Account navigation" className="space-y-1">
             {ACCOUNT_NAV.map(renderNavLink)}
+            <Link
+              href="/"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-[var(--brown-grey)] transition hover:bg-[var(--cream)] hover:text-[var(--espresso)]"
+            >
+              <Globe className="h-4 w-4 shrink-0" />
+              Website
+            </Link>
           </nav>
         </div>
       </div>
 
-      <div className="space-y-2 border-t border-[var(--border-subtle)] pt-4">
-        <div className="flex items-center gap-2.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--background-elevated)] px-2.5 py-2">
+      <div className="space-y-2 border-t border-[var(--border)] pt-4">
+        <div className="flex items-center gap-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 py-2">
           {user.photoURL ? (
             <img
               src={user.photoURL}
@@ -147,22 +153,22 @@ export function AppShell({
               className="h-8 w-8 rounded-full object-cover"
             />
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-semibold text-[var(--background)]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--copper)] text-xs font-semibold text-[var(--white)]">
               {(user.displayName || user.email || "U").charAt(0).toUpperCase()}
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-[var(--foreground)]">
+            <p className="truncate text-xs font-medium text-[var(--espresso)]">
               {user.displayName || "PULSE Member"}
             </p>
-            <p className="truncate text-[11px] text-[var(--foreground-secondary)]">{user.email}</p>
+            <p className="truncate text-[11px] text-[var(--brown-grey)]">{user.email}</p>
           </div>
         </div>
 
         <button
           onClick={handleSignOut}
           disabled={signingOut}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--foreground-muted)] transition hover:bg-[var(--surface-raised)] hover:text-[var(--foreground)] disabled:opacity-50"
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-[var(--brown-grey)] transition hover:bg-[var(--cream)] hover:text-[var(--espresso)] disabled:opacity-50"
         >
           <LogOut className="h-4 w-4" />
           {signingOut ? "Signing out..." : "Sign out"}
@@ -174,7 +180,7 @@ export function AppShell({
   return (
     <div className="flex min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       {/* Desktop Sidebar */}
-      <aside className="hidden w-64 shrink-0 border-r border-[var(--border-subtle)] bg-[var(--background-elevated)] lg:block">
+      <aside className="hidden w-64 shrink-0 border-r border-[var(--border)] bg-[var(--elevated-ivory)] lg:block">
         <div className="sticky top-0 h-screen overflow-y-auto">
           <SidebarContent />
         </div>
@@ -182,23 +188,23 @@ export function AppShell({
 
       {/* Main Content + Mobile Header */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--background-elevated)] px-4 py-3 lg:hidden">
-          <Link href="/home" className="flex items-center gap-2">
-            <Compass className="h-4 w-4 text-[var(--champagne)]" />
-            <span className="font-serif-display text-lg text-[var(--foreground)]">PULSE</span>
+        <header className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--elevated-ivory)] px-4 py-3 lg:hidden">
+          <Link href="/" className="flex items-center gap-2">
+            <Compass className="h-4 w-4 text-[var(--copper)]" />
+            <span className="font-serif-display text-lg text-[var(--espresso)]">PULSE</span>
           </Link>
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle navigation"
             aria-expanded={mobileOpen}
-            className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 text-[var(--foreground-muted)]"
+            className="rounded-xl border border-[var(--border-strong)] bg-[var(--white)] p-2 text-[var(--espresso)]"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </header>
 
         {mobileOpen && (
-          <div className="border-b border-[var(--border-subtle)] bg-[var(--background-elevated)] lg:hidden">
+          <div className="border-b border-[var(--border)] bg-[var(--elevated-ivory)] lg:hidden">
             <SidebarContent />
           </div>
         )}

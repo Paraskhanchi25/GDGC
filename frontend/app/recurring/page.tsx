@@ -31,20 +31,20 @@ export default function RecurringPage() {
     <AppShell unreadCount={data?.unread_notifications ?? 0}>
       <div className="space-y-6">
         <div>
-          <p className="text-xs uppercase tracking-widest text-[var(--amber)]">Commitments</p>
-          <h1 className="font-serif-display text-3xl text-[var(--foreground)]">Recurring Payments</h1>
-          <p className="mt-1 text-sm text-[var(--foreground-muted)]">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--copper)]">Commitments</p>
+          <h1 className="font-serif-display text-3xl text-[var(--espresso)]">Recurring Payments</h1>
+          <p className="mt-1 text-sm text-[var(--brown-grey)]">
             Detected from repeated merchant intervals and consistent amounts. Confirm or dismiss detections below.
           </p>
         </div>
 
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+        <div className="pulse-card rounded-2xl p-5">
           {isLoading ? (
             <ListSkeleton rows={4} />
           ) : error ? (
-            <p className="text-sm text-[var(--danger)]">{(error as Error).message}</p>
+            <p className="text-sm text-[var(--error-text)]">{(error as Error).message}</p>
           ) : !data || data.recurring_payments.length === 0 ? (
-            <p className="py-8 text-center text-sm text-[var(--foreground-secondary)]">
+            <p className="py-8 text-center text-sm text-[var(--brown-grey)]">
               Not enough repeated transactions to detect recurring commitments yet.
             </p>
           ) : (
@@ -52,16 +52,16 @@ export default function RecurringPage() {
               {data.recurring_payments.map((rec) => (
                 <div
                   key={rec.id}
-                  className="flex flex-col justify-between gap-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--background-elevated)] p-4 sm:flex-row sm:items-center"
+                  className="pulse-card-ivory flex flex-col justify-between gap-4 rounded-xl p-4 sm:flex-row sm:items-center"
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-semibold text-[var(--foreground)]">{rec.merchant}</h3>
-                      <span className="rounded bg-[var(--surface-raised)] px-2 py-0.5 text-[10px] uppercase tracking-wider text-[var(--foreground-muted)]">
+                      <h3 className="text-sm font-semibold text-[var(--espresso)]">{rec.merchant}</h3>
+                      <span className="rounded-md bg-[var(--lavender)] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[var(--plum)]">
                         {rec.status}
                       </span>
                     </div>
-                    <p className="mt-1 text-xs text-[var(--foreground-secondary)]">
+                    <p className="mt-1 text-xs text-[var(--brown-grey)]">
                       {rec.frequency} · Next expected: {rec.next_payment_date} · Confidence:{" "}
                       <span className="tabular-nums">{Math.round(rec.confidence * 100)}%</span> ({rec.occurrences} occurrences)
                     </p>
@@ -69,10 +69,10 @@ export default function RecurringPage() {
 
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <p className="text-sm font-semibold tabular-nums text-[var(--champagne)]">
+                      <p className="text-sm font-semibold tabular-nums text-[var(--espresso)]">
                         {formatINR(rec.expected_amount_minor)}
                       </p>
-                      <p className="text-[11px] tabular-nums text-[var(--foreground-secondary)]">
+                      <p className="text-[11px] tabular-nums text-[var(--brown-grey)]">
                         {formatINR(rec.monthly_equivalent_minor)}/mo eq.
                       </p>
                     </div>
@@ -81,7 +81,7 @@ export default function RecurringPage() {
                         onClick={() => statusMutation.mutate({ merchant: rec.merchant, status: "confirmed" })}
                         title="Confirm recurring"
                         aria-label={`Confirm ${rec.merchant}`}
-                        className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 text-[var(--positive)] hover:bg-[var(--surface-raised)]"
+                        className="rounded-xl border border-[var(--border-strong)] bg-[var(--white)] p-2 text-[var(--positive)] hover:bg-[var(--sage)]"
                       >
                         <Check className="h-4 w-4" />
                       </button>
@@ -89,7 +89,7 @@ export default function RecurringPage() {
                         onClick={() => statusMutation.mutate({ merchant: rec.merchant, status: "dismissed" })}
                         title="Dismiss"
                         aria-label={`Dismiss ${rec.merchant}`}
-                        className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 text-[var(--danger)] hover:bg-[var(--surface-raised)]"
+                        className="rounded-xl border border-[var(--border-strong)] bg-[var(--white)] p-2 text-[var(--error-text)] hover:bg-[var(--error-bg)]"
                       >
                         <X className="h-4 w-4" />
                       </button>

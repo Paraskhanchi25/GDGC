@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Compass, Loader2, ShieldCheck } from "lucide-react";
+import { AlertCircle, Compass, Loader2 } from "lucide-react";
 import { BrandedLoader } from "@/components/branded-loader";
 import { usePulseAuth } from "@/components/providers";
 import { apiFetch } from "@/lib/api";
@@ -35,7 +35,7 @@ export default function LoginPage() {
       try {
         await apiFetch("/api/v1/auth/sync", { method: "POST" });
       } catch {
-        // Keep session active; dashboard handles offline retry state cleanly
+        // Keep session active; dashboard handles offline retry cleanly
       }
       router.replace("/home");
     } catch (err) {
@@ -48,33 +48,35 @@ export default function LoginPage() {
   const displayError = error || sessionError;
 
   return (
-    <div className="flex min-h-screen flex-col justify-between bg-[var(--background)] text-[var(--foreground)]">
-      <header className="border-b border-[var(--border-subtle)] bg-[var(--background-elevated)]">
+    <div className="pulse-grid-bg flex min-h-screen flex-col justify-between bg-[var(--background)] text-[var(--foreground)]">
+      <header className="border-b border-[var(--border)] bg-[var(--elevated-ivory)]/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="surface-metallic flex h-8 w-8 items-center justify-center rounded-lg">
-              <Compass className="h-4 w-4 text-[var(--champagne)]" />
+            <div className="pulse-card flex h-8 w-8 items-center justify-center rounded-xl">
+              <Compass className="h-4 w-4 text-[var(--copper)]" />
             </div>
-            <span className="font-serif-display text-xl tracking-tight text-[var(--foreground)]">PULSE</span>
+            <span className="font-serif-display text-xl tracking-tight text-[var(--espresso)]">PULSE</span>
           </Link>
-          <Link href="/" className="text-xs font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)]">
-            Back to overview
+          <Link href="/" className="text-xs font-medium text-[var(--brown-grey)] hover:text-[var(--espresso)]">
+            Back to homepage
           </Link>
         </div>
       </header>
 
       <main className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-12">
-        <div className="surface-metallic copper-glow w-full rounded-2xl p-8">
-          <p className="text-xs uppercase tracking-widest text-[var(--amber)]">Private Workspace</p>
-          <h1 className="mt-2 font-serif-display text-3xl text-[var(--foreground)]">Sign in to PULSE</h1>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--foreground-muted)]">
-            Access your personal allowance forecast, transactions, savings goals, and financial assistant.
+        <div className="pulse-card w-full rounded-3xl p-8">
+          <span className="inline-block rounded-full bg-[var(--lavender-tint)] px-3 py-1 text-[11px] font-medium text-[var(--plum)]">
+            Welcome to PULSE
+          </span>
+          <h1 className="mt-3 font-serif-display text-3xl text-[var(--espresso)]">Sign in to your workspace</h1>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--brown-grey)]">
+            Access your personal allowance forecast, spending breakdown, savings goals, and financial assistant.
           </p>
 
           {displayError && (
             <div
               role="alert"
-              className="mt-5 flex items-start gap-2.5 rounded-xl border border-[var(--danger)]/50 bg-[var(--background)] p-3.5 text-xs text-[var(--danger)]"
+              className="mt-5 flex items-start gap-2.5 rounded-xl border border-[var(--error-text)]/20 bg-[var(--error-bg)] p-3.5 text-xs text-[var(--error-text)]"
             >
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{displayError}</span>
@@ -85,7 +87,7 @@ export default function LoginPage() {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={!firebaseReady || googleSubmitting}
-            className="mt-6 flex w-full items-center justify-center gap-3 rounded-xl bg-[var(--accent)] px-5 py-3.5 text-sm font-medium text-[var(--background)] transition hover:bg-[var(--accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-6 flex w-full items-center justify-center gap-3 rounded-xl bg-[var(--espresso)] px-5 py-3.5 text-sm font-medium text-[var(--white)] transition hover:bg-[var(--deep-copper)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {googleSubmitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -112,10 +114,9 @@ export default function LoginPage() {
             {googleSubmitting ? "Signing in..." : "Continue with Google"}
           </button>
 
-          <div className="mt-6 flex items-center gap-2 border-t border-[var(--border-subtle)] pt-4 text-xs text-[var(--foreground-secondary)]">
-            <ShieldCheck className="h-4 w-4 shrink-0 text-[var(--positive)]" />
-            <span>Only Google sign-in is enabled. Your records are private to your account.</span>
-          </div>
+          <p className="mt-5 text-center text-xs text-[var(--muted-text)]">
+            New to PULSE? Signing in with Google creates your personal workspace automatically.
+          </p>
         </div>
       </main>
     </div>

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Mail, LogOut } from "lucide-react";
+import { LogOut, Mail } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { usePulseAuth } from "@/components/providers";
 import { ListSkeleton } from "@/components/skeletons";
@@ -55,14 +55,14 @@ export default function SettingsPage() {
     <AppShell>
       <div className="space-y-6">
         <div>
-          <p className="text-xs uppercase tracking-widest text-[var(--amber)]">Preferences</p>
-          <h1 className="font-serif-display text-3xl text-[var(--foreground)]">Settings</h1>
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--copper)]">Preferences</p>
+          <h1 className="font-serif-display text-3xl text-[var(--espresso)]">Settings</h1>
         </div>
 
         <div className="grid max-w-2xl gap-6">
-          <div className="surface-metallic rounded-2xl p-6">
-            <h2 className="text-sm font-semibold text-[var(--foreground)]">Notification Preferences</h2>
-            <p className="mt-1 text-xs text-[var(--foreground-secondary)]">
+          <div className="pulse-card rounded-2xl p-6">
+            <h2 className="text-sm font-semibold text-[var(--espresso)]">Notification Preferences</h2>
+            <p className="mt-1 text-xs text-[var(--brown-grey)]">
               Choose which alerts and summaries PULSE sends you.
             </p>
 
@@ -82,39 +82,39 @@ export default function SettingsPage() {
                   ] as const
                 ).map(([key, label]) => (
                   <label key={key} className="flex items-center justify-between gap-2">
-                    <span className="text-[var(--foreground-muted)]">{label}</span>
+                    <span className="text-[var(--espresso)]">{label}</span>
                     <input
                       type="checkbox"
                       checked={data.preferences[key]}
                       onChange={(e) => updatePref.mutate({ [key]: e.target.checked })}
-                      className="h-4 w-4 accent-[var(--accent)]"
+                      className="h-4 w-4 accent-[var(--copper)]"
                     />
                   </label>
                 ))}
               </div>
             )}
 
-            <div className="mt-5 border-t border-[var(--border-subtle)] pt-4">
+            <div className="mt-5 border-t border-[var(--border)] pt-4">
               <button
                 onClick={() => testEmail.mutate()}
                 disabled={testEmail.isPending}
-                className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] px-3.5 py-2 text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3.5 py-2 text-xs font-medium text-[var(--espresso)] hover:bg-[var(--cream)] disabled:opacity-50"
               >
                 <Mail className="h-3.5 w-3.5" />
                 {testEmail.isPending ? "Sending..." : "Send Test Email"}
               </button>
-              {emailStatus && <p className="mt-2 text-xs text-[var(--foreground-muted)]">{emailStatus}</p>}
+              {emailStatus && <p className="mt-2 text-xs text-[var(--brown-grey)]">{emailStatus}</p>}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
-            <h2 className="text-sm font-semibold text-[var(--foreground)]">Session & Security</h2>
-            <p className="mt-1 text-xs text-[var(--foreground-secondary)]">
-              Signed in via Google as <span className="text-[var(--foreground)]">{user?.email}</span>.
+          <div className="pulse-card rounded-2xl p-6">
+            <h2 className="text-sm font-semibold text-[var(--espresso)]">Session & Security</h2>
+            <p className="mt-1 text-xs text-[var(--brown-grey)]">
+              Signed in as <span className="font-medium text-[var(--espresso)]">{user?.email}</span>.
             </p>
             <button
               onClick={handleSignOut}
-              className="mt-4 inline-flex items-center gap-2 rounded-lg border border-[var(--danger)]/40 bg-[var(--background)] px-4 py-2 text-xs font-medium text-[var(--danger)] hover:bg-[var(--surface-raised)]"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--error-text)]/25 bg-[var(--error-bg)] px-4 py-2 text-xs font-medium text-[var(--error-text)] hover:opacity-90"
             >
               <LogOut className="h-3.5 w-3.5" /> Sign out of PULSE
             </button>

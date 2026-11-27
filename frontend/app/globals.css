@@ -1,47 +1,51 @@
 @import "tailwindcss";
 
 :root {
-  /* Warm Futuristic Fintech — Dark-Only Palette */
-  --background: #17120F;
-  --background-elevated: #211812;
-  --surface: #2A211B;
-  --surface-raised: #342820;
-  --surface-hover: #3D2F26;
-  --border: #49392E;
-  --border-subtle: #352920;
+  /* Light-First Warm Fintech Design System */
+  --ivory: #F5F1EA;
+  --cream: #F0ECE5;
+  --white: #FFFFFF;
+  --elevated-ivory: #FBFAF7;
 
-  --foreground: #F4EBDD;
-  --foreground-muted: #C8BBAA;
-  --foreground-secondary: #A99B8A;
+  --espresso: #29231F;
+  --brown-grey: #766E66;
+  --muted-text: #A49A90;
 
-  --accent: #B8754C;
-  --accent-hover: #C9855B;
-  --amber: #D59A58;
-  --champagne: #E9C89A;
+  --copper: #B87950;
+  --deep-copper: #945F40;
+  --champagne: #E8CBA8;
 
-  --positive: #91A88B;
-  --warning: #D5A15E;
-  --danger: #C97B70;
+  --plum: #89769D;
+  --lavender: #EAE3F1;
+  --lavender-tint: #F3EFF7;
+  --soft-blue: #DCE5F6;
+  --blue-accent: #526C9C;
+  --sage: #DDE8D8;
+  --positive: #54734C;
+  --warning-bg: #F7EEDC;
+  --warning-text: #8C6229;
+  --error-bg: #F6E7E3;
+  --error-text: #9E4738;
 
-  /* Semantic aliases for existing components */
-  --bg-canvas: var(--background);
-  --bg-paper: var(--surface);
-  --bg-muted: var(--surface-raised);
-  --border-stone: var(--border);
-  --text-primary: var(--foreground);
-  --text-secondary: var(--foreground-muted);
-  --text-muted: var(--foreground-secondary);
-  --accent-espresso: var(--accent);
-  --accent-taupe: var(--amber);
-  --accent-sage: var(--positive);
-  --status-positive: var(--positive);
-  --status-warning: var(--warning);
-  --status-danger: var(--danger);
+  --border: #E9E4DC;
+  --border-strong: #DCD4C9;
+
+  /* Semantic Tokens */
+  --background: var(--ivory);
+  --background-elevated: var(--elevated-ivory);
+  --surface: var(--white);
+  --surface-soft: var(--cream);
+  --foreground: var(--espresso);
+  --foreground-muted: var(--brown-grey);
+  --foreground-secondary: var(--muted-text);
+  --accent: var(--copper);
+  --accent-hover: var(--deep-copper);
 }
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
+    scroll-behavior: smooth;
   }
 
   html,
@@ -62,18 +66,27 @@
   font-variant-numeric: tabular-nums;
 }
 
-.surface-metallic {
-  background: linear-gradient(145deg, rgba(52, 40, 32, 0.92), rgba(33, 24, 18, 0.96));
-  border: 1px solid var(--border);
-  box-shadow:
-    inset 0 1px 0 rgba(233, 200, 154, 0.08),
-    0 16px 40px -18px rgba(0, 0, 0, 0.7);
+.pulse-grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(220, 212, 201, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(220, 212, 201, 0.35) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
-.copper-glow {
-  box-shadow:
-    0 0 0 1px rgba(233, 200, 154, 0.12),
-    0 18px 48px -16px rgba(184, 117, 76, 0.25);
+.pulse-card {
+  background-color: var(--white);
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px -18px rgba(41, 35, 31, 0.14);
+}
+
+.pulse-card-ivory {
+  background-color: var(--elevated-ivory);
+  border: 1px solid var(--border);
+}
+
+.pulse-card-lavender {
+  background: linear-gradient(155deg, var(--white) 0%, var(--lavender-tint) 100%);
+  border: 1px solid var(--lavender);
 }
 
 @media (prefers-reduced-motion: reduce) {

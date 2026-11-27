@@ -12,18 +12,18 @@ export function BrandedLoader({ message = "Preparing your workspace" }: { messag
         {!reduceMotion && (
           <motion.div
             aria-hidden="true"
-            animate={{ scale: [1, 1.35, 1], opacity: [0.45, 0.1, 0.45] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute h-20 w-20 rounded-full border border-[var(--champagne)]/40"
+            animate={{ scale: [1, 1.35, 1], opacity: [0.55, 0.12, 0.55] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute h-20 w-20 rounded-full border border-[var(--copper)]/40"
           />
         )}
-        <div className="surface-metallic flex h-14 w-14 items-center justify-center rounded-2xl">
-          <Compass className="h-6 w-6 text-[var(--champagne)]" />
+        <div className="pulse-card flex h-14 w-14 items-center justify-center rounded-2xl">
+          <Compass className="h-6 w-6 text-[var(--copper)]" />
         </div>
       </div>
 
-      <p className="mt-6 font-serif-display text-2xl tracking-tight text-[var(--foreground)]">PULSE</p>
-      <p className="mt-1.5 text-xs tracking-wide text-[var(--foreground-secondary)]">{message}</p>
+      <p className="mt-6 font-serif-display text-2xl tracking-tight text-[var(--espresso)]">PULSE</p>
+      <p className="mt-1.5 text-xs tracking-wide text-[var(--brown-grey)]">{message}</p>
     </div>
   );
 }

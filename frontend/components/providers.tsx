@@ -45,7 +45,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const firebaseReady = isFirebaseConfigured();
 
   useEffect(() => {
-    document.documentElement.classList.add("dark");
+    document.documentElement.classList.remove("dark");
 
     const auth = getFirebaseAuth();
     if (!auth) {

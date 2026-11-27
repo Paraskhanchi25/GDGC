@@ -27,51 +27,49 @@ export default function AnalyticsPage() {
     <AppShell unreadCount={data?.unread_notifications ?? 0}>
       <div className="space-y-6">
         <div>
-          <p className="text-xs uppercase tracking-widest text-[var(--amber)]">Intelligence</p>
-          <h1 className="font-serif-display text-3xl text-[var(--foreground)]">Spending Analytics</h1>
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--copper)]">Intelligence</p>
+          <h1 className="font-serif-display text-3xl text-[var(--espresso)]">Spending Analytics</h1>
         </div>
 
         {isLoading ? (
           <DashboardSkeleton />
         ) : error || !data ? (
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 text-sm text-[var(--danger)]">
+          <div className="pulse-card rounded-2xl p-5 text-sm text-[var(--error-text)]">
             {(error as Error)?.message || "Unable to load analytics right now."}
           </div>
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
-                <p className="text-xs text-[var(--foreground-secondary)]">{data.period_comparison.current_month_label}</p>
-                <p className="mt-2 text-2xl font-semibold tabular-nums text-[var(--foreground)]">
+              <div className="pulse-card rounded-2xl p-5">
+                <p className="text-xs text-[var(--brown-grey)]">{data.period_comparison.current_month_label}</p>
+                <p className="mt-2 text-2xl font-semibold tabular-nums text-[var(--espresso)]">
                   {formatINR(data.period_comparison.current_month_expense_minor)}
                 </p>
-                <p className="mt-1 text-xs text-[var(--foreground-secondary)]">Current month expenses</p>
+                <p className="mt-1 text-xs text-[var(--brown-grey)]">Current month expenses</p>
               </div>
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
-                <p className="text-xs text-[var(--foreground-secondary)]">{data.period_comparison.previous_month_label}</p>
-                <p className="mt-2 text-2xl font-semibold tabular-nums text-[var(--foreground)]">
+              <div className="pulse-card rounded-2xl p-5">
+                <p className="text-xs text-[var(--brown-grey)]">{data.period_comparison.previous_month_label}</p>
+                <p className="mt-2 text-2xl font-semibold tabular-nums text-[var(--espresso)]">
                   {formatINR(data.period_comparison.previous_month_expense_minor)}
                 </p>
-                <p className="mt-1 text-xs text-[var(--foreground-secondary)]">Previous month expenses</p>
+                <p className="mt-1 text-xs text-[var(--brown-grey)]">Previous month expenses</p>
               </div>
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
-                <p className="text-xs text-[var(--foreground-secondary)]">Month-over-Month Change</p>
-                <p className="mt-2 text-2xl font-semibold tabular-nums text-[var(--champagne)]">
+              <div className="pulse-card-lavender rounded-2xl p-5">
+                <p className="text-xs text-[var(--plum)]">Month-over-Month Change</p>
+                <p className="mt-2 text-2xl font-semibold tabular-nums text-[var(--espresso)]">
                   {data.period_comparison.change_percentage === null
                     ? "N/A"
                     : `${data.period_comparison.change_percentage > 0 ? "+" : ""}${data.period_comparison.change_percentage}%`}
                 </p>
-                <p className="mt-1 text-xs text-[var(--foreground-secondary)]">Compared to prior month</p>
+                <p className="mt-1 text-xs text-[var(--brown-grey)]">Compared to prior month</p>
               </div>
             </div>
 
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
-              <h2 className="text-sm font-semibold text-[var(--foreground)]">Monthly Income vs. Expenses</h2>
-              <p className="mb-4 text-xs text-[var(--foreground-secondary)]">Cash-flow history in INR</p>
+            <div className="pulse-card rounded-2xl p-5">
+              <h2 className="text-sm font-semibold text-[var(--espresso)]">Monthly Income vs. Expenses</h2>
+              <p className="mb-4 text-xs text-[var(--brown-grey)]">Cash-flow history in INR</p>
               {data.monthly_trends.length === 0 ? (
-                <p className="py-10 text-center text-xs text-[var(--foreground-secondary)]">
-                  Not enough monthly history yet.
-                </p>
+                <p className="py-10 text-center text-xs text-[var(--brown-grey)]">Not enough monthly history yet.</p>
               ) : (
                 <div className="h-72 w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -82,22 +80,22 @@ export default function AnalyticsPage() {
                         Expenses: paiseToRupees(m.expense_minor),
                       }))}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#352920" vertical={false} />
-                      <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#A99B8A" }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: "#A99B8A" }} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v}`} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E9E4DC" vertical={false} />
+                      <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#766E66" }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 11, fill: "#766E66" }} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v}`} />
                       <Tooltip
                         formatter={(val: number) => `₹${val.toLocaleString("en-IN")}`}
                         contentStyle={{
-                          backgroundColor: "#211812",
-                          borderColor: "#49392E",
-                          borderRadius: "8px",
-                          color: "#F4EBDD",
+                          backgroundColor: "#FFFFFF",
+                          borderColor: "#E9E4DC",
+                          borderRadius: "12px",
+                          color: "#29231F",
                           fontSize: "12px",
                         }}
                       />
-                      <Legend wrapperStyle={{ fontSize: "12px", color: "#C8BBAA" }} />
-                      <Bar dataKey="Income" fill="#91A88B" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="Expenses" fill="#B8754C" radius={[4, 4, 0, 0]} />
+                      <Legend wrapperStyle={{ fontSize: "12px", color: "#29231F" }} />
+                      <Bar dataKey="Income" fill="#54734C" radius={[6, 6, 0, 0]} />
+                      <Bar dataKey="Expenses" fill="#B87950" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -105,24 +103,24 @@ export default function AnalyticsPage() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
-                <h2 className="text-sm font-semibold text-[var(--foreground)]">Category Totals</h2>
+              <div className="pulse-card rounded-2xl p-5">
+                <h2 className="text-sm font-semibold text-[var(--espresso)]">Category Totals</h2>
                 <div className="mt-4 space-y-3">
                   {data.categories.length === 0 ? (
-                    <p className="text-xs text-[var(--foreground-secondary)]">No category expenses recorded yet.</p>
+                    <p className="text-xs text-[var(--brown-grey)]">No category expenses recorded yet.</p>
                   ) : (
                     data.categories.map((c) => (
                       <div key={c.category} className="space-y-1">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-medium text-[var(--foreground)]">
+                          <span className="font-medium text-[var(--espresso)]">
                             {c.category} ({c.count})
                           </span>
-                          <span className="tabular-nums text-[var(--foreground-muted)]">
+                          <span className="tabular-nums text-[var(--brown-grey)]">
                             {c.amount_formatted} · {c.percentage}%
                           </span>
                         </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--background)]">
-                          <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${c.percentage}%` }} />
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--cream)]">
+                          <div className="h-full rounded-full bg-[var(--copper)]" style={{ width: `${c.percentage}%` }} />
                         </div>
                       </div>
                     ))
@@ -130,19 +128,19 @@ export default function AnalyticsPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
-                <h2 className="text-sm font-semibold text-[var(--foreground)]">Unusual Spending Observations</h2>
+              <div className="pulse-card rounded-2xl p-5">
+                <h2 className="text-sm font-semibold text-[var(--espresso)]">Unusual Spending Observations</h2>
                 <div className="mt-4 space-y-3">
                   {data.unusual_spending.length === 0 ? (
-                    <p className="text-xs text-[var(--foreground-secondary)]">No unusual spending spikes detected.</p>
+                    <p className="text-xs text-[var(--brown-grey)]">No unusual spending spikes detected.</p>
                   ) : (
                     data.unusual_spending.map((u) => (
-                      <div key={u.transaction_id} className="rounded-lg border border-[var(--border-subtle)] bg-[var(--background-elevated)] p-3">
+                      <div key={u.transaction_id} className="pulse-card-ivory rounded-xl p-3">
                         <div className="flex items-center justify-between text-xs font-medium">
-                          <span>{u.merchant}</span>
-                          <span className="tabular-nums text-[var(--amber)]">{u.amount_formatted}</span>
+                          <span className="text-[var(--espresso)]">{u.merchant}</span>
+                          <span className="tabular-nums text-[var(--deep-copper)]">{u.amount_formatted}</span>
                         </div>
-                        <p className="mt-1 text-xs text-[var(--foreground-secondary)]">
+                        <p className="mt-1 text-xs text-[var(--brown-grey)]">
                           {u.date} · {u.reason}
                         </p>
                       </div>

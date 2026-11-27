@@ -60,19 +60,19 @@ export default function ProfilePage() {
     <AppShell>
       <div className="space-y-6">
         <div>
-          <p className="text-xs uppercase tracking-widest text-[var(--amber)]">Account</p>
-          <h1 className="font-serif-display text-3xl text-[var(--foreground)]">Profile & Allowance</h1>
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--copper)]">Account</p>
+          <h1 className="font-serif-display text-3xl text-[var(--espresso)]">Profile & Allowance</h1>
         </div>
 
         {isLoading ? (
           <ListSkeleton rows={4} />
         ) : error ? (
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 text-sm text-[var(--danger)]">
+          <div className="pulse-card rounded-2xl p-5 text-sm text-[var(--error-text)]">
             {(error as Error).message}
           </div>
         ) : (
-          <div className="surface-metallic max-w-2xl rounded-2xl p-6">
-            <div className="mb-6 flex items-center gap-4 border-b border-[var(--border-subtle)] pb-5">
+          <div className="pulse-card max-w-2xl rounded-2xl p-6">
+            <div className="mb-6 flex items-center gap-4 border-b border-[var(--border)] pb-5">
               {user?.photoURL ? (
                 <img
                   src={user.photoURL}
@@ -81,18 +81,18 @@ export default function ProfilePage() {
                   className="h-14 w-14 rounded-full object-cover"
                 />
               ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-lg font-semibold text-[var(--background)]">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--copper)] text-lg font-semibold text-[var(--white)]">
                   {(displayName || user?.email || "U").charAt(0).toUpperCase()}
                 </div>
               )}
               <div>
-                <p className="text-base font-semibold text-[var(--foreground)]">{displayName || "PULSE Member"}</p>
-                <p className="text-xs text-[var(--foreground-secondary)]">{user?.email}</p>
+                <p className="text-base font-semibold text-[var(--espresso)]">{displayName || "PULSE Member"}</p>
+                <p className="text-xs text-[var(--brown-grey)]">{user?.email}</p>
               </div>
             </div>
 
             {savedBanner && (
-              <div className="mb-4 flex items-center gap-2 rounded-lg border border-[var(--positive)]/40 bg-[var(--background)] px-3 py-2 text-xs text-[var(--positive)]">
+              <div className="mb-4 flex items-center gap-2 rounded-xl bg-[var(--sage)] px-3 py-2 text-xs text-[var(--positive)]">
                 <CheckCircle2 className="h-4 w-4" /> Profile updated successfully.
               </div>
             )}
@@ -105,44 +105,44 @@ export default function ProfilePage() {
               className="space-y-4 text-xs"
             >
               <div>
-                <label className="mb-1 block font-medium text-[var(--foreground-muted)]">Display Name</label>
+                <label className="mb-1 block font-medium text-[var(--espresso)]">Display Name</label>
                 <input
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-2 text-sm text-[var(--foreground)]"
+                  className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-sm text-[var(--espresso)]"
                 />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--foreground-muted)]">Monthly Allowance (INR)</label>
+                  <label className="mb-1 block font-medium text-[var(--espresso)]">Monthly Allowance (INR)</label>
                   <input
                     type="number"
                     min="0"
                     value={allowanceRupees}
                     onChange={(e) => setAllowanceRupees(e.target.value)}
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-2 text-sm tabular-nums text-[var(--foreground)]"
+                    className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-sm tabular-nums text-[var(--espresso)]"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--foreground-muted)]">Current Savings (INR)</label>
+                  <label className="mb-1 block font-medium text-[var(--espresso)]">Current Savings (INR)</label>
                   <input
                     type="number"
                     min="0"
                     value={currentSavingsRupees}
                     onChange={(e) => setCurrentSavingsRupees(e.target.value)}
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-2 text-sm tabular-nums text-[var(--foreground)]"
+                    className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-sm tabular-nums text-[var(--espresso)]"
                   />
                 </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--foreground-muted)]">Allowance Frequency</label>
+                  <label className="mb-1 block font-medium text-[var(--espresso)]">Allowance Frequency</label>
                   <select
                     value={frequency}
                     onChange={(e) => setFrequency(e.target.value)}
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-2 text-sm text-[var(--foreground)]"
+                    className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-sm text-[var(--espresso)]"
                   >
                     <option value="monthly">Monthly</option>
                     <option value="weekly">Weekly</option>
@@ -150,12 +150,12 @@ export default function ProfilePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block font-medium text-[var(--foreground-muted)]">Next Allowance Date</label>
+                  <label className="mb-1 block font-medium text-[var(--espresso)]">Next Allowance Date</label>
                   <input
                     type="date"
                     value={nextAllowanceDate}
                     onChange={(e) => setNextAllowanceDate(e.target.value)}
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-2 text-sm text-[var(--foreground)]"
+                    className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--elevated-ivory)] px-3 py-2 text-sm text-[var(--espresso)]"
                   />
                 </div>
               </div>
@@ -163,7 +163,7 @@ export default function ProfilePage() {
               <button
                 type="submit"
                 disabled={updateMutation.isPending}
-                className="rounded-lg bg-[var(--accent)] px-5 py-2.5 text-sm font-medium text-[var(--background)] transition hover:bg-[var(--accent-hover)] disabled:opacity-50"
+                className="rounded-xl bg-[var(--copper)] px-5 py-2.5 text-sm font-medium text-[var(--white)] transition hover:bg-[var(--deep-copper)] disabled:opacity-50"
               >
                 {updateMutation.isPending ? "Saving..." : "Save Profile"}
               </button>
