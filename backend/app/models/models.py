@@ -12,6 +12,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -242,3 +243,79 @@ class ImportJob(Base):
     imported_count: Mapped[int] = mapped_column(Integer, default=0)
     rejected_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class GmailConnection(Base):
+    __tablename__ = "gmail_connections"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True)
+    gmail_email: Mapped[str] = mapped_column(String(255), nullable=False)
+    encrypted_refresh_token: Mapped[str] = mapped_column(Text, nullable=False)
+    granted_scopes: Mapped[str] = mapped_column(Text, default="https://www.googleapis.com/auth/gmail.readonly")
+    connection_status: Mapped[str] = mapped_column(String(32), default="connected")  # connected, revoked, error
+    history_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    last_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+    __table_args__ = (
+        Index("ix_subscriptions_user_merchant", "user_id", "merchant_name"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    merchant_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    merchant_category: Mapped[str] = mapped_column(String(80), default="Subscriptions")
+    amount_minor: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    currency: Mapped[str] = mapped_column(String(8), default="INR")
+    billing_frequency: Mapped[str] = mapped_column(String(24), default="unknown")  # weekly, monthly, quarterly, yearly, unknown
+    last_payment_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    next_billing_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    subscription_status: Mapped[str] = mapped_column(String(24), default="active")  # active, trial, payment_failed, cancelled, inactive
+    trial_end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    detection_confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    verification_status: Mapped[str] = mapped_column(String(32), default="needs_confirmation")  # confirmed, needs_confirmation
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class SubscriptionEmailEvent(Base):
+    __tablename__ = "subscription_email_events"
+    __table_args__ = (
+        UniqueConstraint("user_id", "gmail_message_id", name="uq_sub_email_event_user_msg"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    subscription_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("subscriptions.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    gmail_message_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    event_type: Mapped[str] = mapped_column(String(48), nullable=False)
+    merchant_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    extracted_amount_minor: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    extracted_currency: Mapped[str] = mapped_column(String(8), default="INR")
+    extracted_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    extraction_confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    processed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class SubscriptionSyncLog(Base):
+    __tablename__ = "subscription_sync_logs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    sync_started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    sync_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    messages_scanned: Mapped[int] = mapped_column(Integer, default=0)
+    subscriptions_detected: Mapped[int] = mapped_column(Integer, default=0)
+    errors: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sync_status: Mapped[str] = mapped_column(String(24), default="running")  # running, completed, failed

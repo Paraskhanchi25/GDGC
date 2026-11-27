@@ -309,3 +309,123 @@ def test_multi_bank_otp_isolation_and_date_bounds(monkeypatch):
         accounts_api.remove_account(hdfc_acc["id"], user=user_b, db=db)
     assert exc_other_del.value.status_code == 404
 
+
+@pytest.mark.asyncio
+async def test_gmail_oauth_crypto_subscription_detection_and_isolation(monkeypatch):
+    from app.api import gmail as gmail_api
+    from app.gmail.crypto import create_oauth_state, decrypt_token, encrypt_token, verify_oauth_state
+    from app.gmail.detector import analyze_subscription_email
+    from app.gmail.sync_service import apply_detected_event
+    from app.models.models import GmailConnection
+
+    # 1. Token encryption & CSRF OAuth state validation
+    secret_refresh = "1//0gFakeRefreshTokenForTesting"
+    enc = encrypt_token(secret_refresh)
+    assert enc != secret_refresh
+    assert decrypt_token(enc) == secret_refresh
+
+    state = create_oauth_state("user-123")
+    assert verify_oauth_state(state) == "user-123"
+    with pytest.raises(ValueError):
+        verify_oauth_state(state + "tampered")
+
+    # 2. Subscription email detection rules
+    netflix_evt = analyze_subscription_email(
+        gmail_message_id="msg-netflix-1",
+        sender="Netflix <info@mailer.netflix.com>",
+        subject="Your Netflix monthly subscription renewal receipt",
+        email_date=date(2026, 11, 15),
+        body_text="Your monthly plan renewed for ₹649. Next billing date: 2026-12-15.",
+    )
+    assert netflix_evt.is_subscription is True
+    assert netflix_evt.merchant_name == "Netflix"
+    assert netflix_evt.amount_minor == 64900
+    assert netflix_evt.billing_frequency == "monthly"
+    assert netflix_evt.event_type == "payment_successful"
+
+    # One-time purchase must NOT be classified as a subscription
+    one_time_evt = analyze_subscription_email(
+        gmail_message_id="msg-order-1",
+        sender="Amazon <auto-confirm@amazon.in>",
+        subject="Your Amazon order shipped",
+        email_date=date(2026, 11, 16),
+        body_text="Your one-time purchase of ₹1,299 has been delivered on 2026-11-16. Tracking number: 12345.",
+    )
+    assert one_time_evt.is_subscription is False
+
+    # Missing amount handled safely without fabricating values
+    missing_amt_evt = analyze_subscription_email(
+        gmail_message_id="msg-spotify-trial",
+        sender="Spotify <no-reply@spotify.com>",
+        subject="Your Spotify free trial is ending soon",
+        email_date=date(2026, 11, 20),
+        body_text="Your free trial ends on 2026-11-28. Manage your subscription anytime.",
+    )
+    assert missing_amt_evt.is_subscription is True
+    assert missing_amt_evt.amount_minor is None
+    assert missing_amt_evt.event_type == "trial_ending"
+    assert missing_amt_evt.trial_end_date == date(2026, 11, 28)
+
+    # Payment failure & cancellation updates
+    db = _make_memory_db()
+    user_a = get_current_user({"uid": "gmail-a", "email": "ga@example.com", "email_verified": True, "name": "GA"}, db)
+    user_b = get_current_user({"uid": "gmail-b", "email": "gb@example.com", "email_verified": True, "name": "GB"}, db)
+
+    sub = apply_detected_event(db, user_a.id, netflix_evt)
+    assert sub is not None
+    # Duplicate message ID ignored
+    assert apply_detected_event(db, user_a.id, netflix_evt) is None
+
+    # Price change + payment failure + cancellation
+    price_change_evt = analyze_subscription_email(
+        "msg-netflix-2",
+        "Netflix <info@mailer.netflix.com>",
+        "Your Netflix plan changed",
+        date(2026, 11, 18),
+        "Your monthly subscription plan changed to ₹799.",
+    )
+    apply_detected_event(db, user_a.id, price_change_evt)
+    assert sub.amount_minor == 79900
+
+    cancel_evt = analyze_subscription_email(
+        "msg-netflix-3",
+        "Netflix <info@mailer.netflix.com>",
+        "Netflix subscription cancelled",
+        date(2026, 11, 22),
+        "Your subscription cancellation is confirmed.",
+    )
+    apply_detected_event(db, user_a.id, cancel_evt)
+    assert sub.subscription_status == "cancelled"
+
+    apply_detected_event(db, user_a.id, missing_amt_evt)
+    db.commit()
+
+    # Dashboard totals & cross-user isolation
+    dash_a = gmail_api.get_subscriptions_dashboard(user=user_a, db=db)
+    dash_b = gmail_api.get_subscriptions_dashboard(user=user_b, db=db)
+    assert dash_a["summary"]["total_detected"] == 2
+    assert dash_b["summary"]["total_detected"] == 0
+
+    with pytest.raises(HTTPException) as exc_sub_iso:
+        gmail_api.delete_subscription(sub.id, user=user_b, db=db)
+    assert exc_sub_iso.value.status_code == 404
+
+    # Callback cancellation & disconnect
+    resp_cancel = await gmail_api.gmail_oauth_callback(db=db, error="access_denied")
+    assert resp_cancel.status_code == 302
+    assert "gmail=cancelled" in resp_cancel.headers["location"]
+
+    db.add(
+        GmailConnection(
+            id="gc-1",
+            user_id=user_a.id,
+            gmail_email="different.gmail@gmail.com",
+            encrypted_refresh_token=enc,
+        )
+    )
+    db.commit()
+    status_a = gmail_api.get_gmail_status(user=user_a, db=db)
+    assert status_a["connected"] is True
+    assert status_a["differs_from_login_email"] is True
+
+

@@ -52,6 +52,12 @@ export default function DashboardPage() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Link
+              href="/subscriptions"
+              className="rounded-xl border border-[var(--border-strong)] bg-[var(--white)] px-3.5 py-2 text-xs font-medium text-[var(--espresso)] transition hover:bg-[var(--cream)]"
+            >
+              Connect Gmail
+            </Link>
+            <Link
               href="/transactions"
               className="rounded-xl border border-[var(--border-strong)] bg-[var(--white)] px-3.5 py-2 text-xs font-medium text-[var(--espresso)] transition hover:bg-[var(--cream)]"
             >

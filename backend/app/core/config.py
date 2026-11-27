@@ -43,6 +43,12 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str = "noreply@pulse.local"
     SMTP_USE_TLS: bool = True
 
+    # Gmail OAuth 2.0 (Read-Only Subscription Detection)
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_REDIRECT_URI: str = ""
+    GOOGLE_OAUTH_ENCRYPTION_KEY: str = ""
+
     # Storage
     STORAGE_ROOT: str = "/app/storage"
     MAX_UPLOAD_SIZE_MB: int = 10
