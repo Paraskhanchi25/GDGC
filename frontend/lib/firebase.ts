@@ -17,13 +17,18 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
 };
 
+export function getMissingFirebaseConfig(): string[] {
+  const required = {
+    NEXT_PUBLIC_FIREBASE_API_KEY: firebaseConfig.apiKey,
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: firebaseConfig.authDomain,
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID: firebaseConfig.projectId,
+    NEXT_PUBLIC_FIREBASE_APP_ID: firebaseConfig.appId,
+  };
+  return Object.entries(required).filter(([, value]) => !value.trim()).map(([name]) => name);
+}
+
 export function isFirebaseConfigured(): boolean {
-  return Boolean(
-    firebaseConfig.apiKey &&
-      firebaseConfig.authDomain &&
-      firebaseConfig.projectId &&
-      firebaseConfig.appId
-  );
+  return getMissingFirebaseConfig().length === 0;
 }
 
 let app: FirebaseApp | null = null;

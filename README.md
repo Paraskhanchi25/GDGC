@@ -57,6 +57,8 @@ Open `http://localhost:3000`.
    - **Important:** `NEXT_PUBLIC_*` variables are baked into the Next.js client bundle at Docker build time. Pass them as build arguments in Coolify.
 4. Set `FIREBASE_PROJECT_ID=gdgc-10270` and/or `FIREBASE_SERVICE_ACCOUNT_JSON` (raw JSON string) on the backend only.
 
+If the login page shows **Sign-in is temporarily unavailable** with no failed requests, the browser build is missing Firebase configuration and deliberately skips SDK initialization. In Coolify, enable **Available at Buildtime** for `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, and `NEXT_PUBLIC_FIREBASE_APP_ID`, save, then rebuild/redeploy the Docker image. A runtime-only change or container restart cannot replace values already inlined into the browser bundle. The browser console reports missing variable names only. Docker Compose forwards these four build arguments from its environment/`.env`; `env_file` alone supplies runtime values only. Backend service-account credentials and `GEMINI_API_KEY` must remain backend-only.
+
 ## Direct Google Gemini API
 Set backend variables `GEMINI_PROVIDER=google`, `GEMINI_API_KEY` and `GEMINI_MODEL=gemini-3.1-flash-lite` in your local `.env` and Coolify. The personal key is never a frontend build argument. The old administrator gateway is removed; no gateway or alternate-key fallback exists.
 

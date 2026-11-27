@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MotionConfig } from "framer-motion";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { apiFetch } from "@/lib/api";
-import { getFirebaseAuth, isFirebaseConfigured, signOutUser } from "@/lib/firebase";
+import { getFirebaseAuth, getMissingFirebaseConfig, isFirebaseConfigured, signOutUser } from "@/lib/firebase";
 
 interface AuthContextValue {
   user: FirebaseUser | null;
@@ -51,6 +51,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     const auth = getFirebaseAuth();
     if (!auth) {
+      // Names only: never log configuration values or backend credentials.
+      console.warn(`[PULSE] Google sign-in is disabled. Missing browser build settings: ${getMissingFirebaseConfig().join(", ")}. Supply these as Docker/Coolify build-time variables and rebuild the frontend image.`);
       setSessionError("Sign-in is temporarily unavailable.");
       setLoading(false);
       return;
