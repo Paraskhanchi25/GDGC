@@ -261,6 +261,18 @@ test("protected route uses the existing sign-in page", async ({ page }) => {
   await expect(page.getByRole("button", { name: /Google/ })).toBeVisible();
 });
 
+test("login manifest uses credentials and is served publicly", async ({ page }) => {
+  await page.goto("/login");
+  const manifest = page.locator('link[rel="manifest"]');
+  await expect(manifest).toHaveCount(1);
+  await expect(manifest).toHaveAttribute("href", "/manifest.webmanifest");
+  await expect(manifest).toHaveAttribute("crossorigin", "use-credentials");
+  const response = await page.request.get("/manifest.webmanifest");
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toContain("application/manifest+json");
+  expect((await response.json()).name).toBe("PULSE Student Finance");
+});
+
 test("showcase completes, skips and restarts without writes", async ({
   page,
 }) => {

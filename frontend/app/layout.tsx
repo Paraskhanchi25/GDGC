@@ -11,7 +11,6 @@ export const metadata: Metadata = {
     icon: [{ url: "/brand/symbol.svg", type: "image/svg+xml" }, { url: "/brand/icon-32.png", sizes: "32x32" }, { url: "/brand/icon-16.png", sizes: "16x16" }],
     apple: "/brand/icon-180.png",
   },
-  manifest: "/manifest.webmanifest",
   openGraph: { title: "PULSE — Your money. A clearer picture.", images: [{ url: "/brand/open-graph.png", width: 1200, height: 630 }] },
 };
 
@@ -23,6 +22,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Manifest requests need cookies to pass an existing Cloudflare clearance. */}
+        <link rel="manifest" href="/manifest.webmanifest" crossOrigin="use-credentials" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
