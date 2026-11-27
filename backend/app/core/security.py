@@ -87,6 +87,12 @@ def verify_firebase_token(authorization: Annotated[str | None, Header()] = None)
             detail="Authentication token has expired.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    except firebase_auth.RevokedIdTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication token has been revoked.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     except firebase_auth.InvalidIdTokenError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

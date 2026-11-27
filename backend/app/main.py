@@ -6,13 +6,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from app.ai.copilot_service import CopilotService
-from app.api.demo import router as demo_router
 from app.api.v1 import router as v1_router
 from app.core.config import get_settings
 from app.core.logging import request_id_ctx, setup_logging
 from app.core.security import init_firebase
-from app.db.session import check_database_health
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -87,15 +84,7 @@ app.add_middleware(RequestIDMiddleware)
 
 @app.get("/health", tags=["Health"])
 def health_check() -> dict:
-    db_health = check_database_health()
-    ai_status = CopilotService().status()
-    return {
-        "status": "ok",
-        "service": "pulse-backend",
-        "database": db_health,
-        "ai_gateway_configured": ai_status["configured"],
-    }
+    return {"status": "ok"}
 
 
-app.include_router(demo_router)
 app.include_router(v1_router)

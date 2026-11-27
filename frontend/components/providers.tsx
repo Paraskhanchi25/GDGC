@@ -9,22 +9,16 @@ import { getFirebaseAuth, isFirebaseConfigured, signOutUser } from "@/lib/fireba
 interface AuthContextValue {
   user: FirebaseUser | null;
   loading: boolean;
-  isDemo: boolean;
-  setDemoMode: (val: boolean) => void;
   firebaseReady: boolean;
-  darkMode: boolean;
-  toggleDarkMode: () => void;
+  sessionError: string | null;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   loading: true,
-  isDemo: true,
-  setDemoMode: () => {},
   firebaseReady: false,
-  darkMode: false,
-  toggleDarkMode: () => {},
+  sessionError: null,
   logout: async () => {},
 });
 
@@ -47,60 +41,48 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isDemo, setIsDemo] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const firebaseReady = isFirebaseConfigured();
 
   useEffect(() => {
-    const savedTheme = window.localStorage.getItem("pulse_theme");
-    if (savedTheme === "dark") {
-      setDarkMode(true);
-      document.documentElement.classList.add("dark");
-    }
+    document.documentElement.classList.add("dark");
 
     const auth = getFirebaseAuth();
     if (!auth) {
+      setSessionError("Sign-in is temporarily unavailable.");
       setLoading(false);
       return;
     }
-    const unsub = onAuthStateChanged(auth, async (fbUser) => {
-      setUser(fbUser);
-      if (fbUser) {
-        setIsDemo(false);
-        try {
-          await apiFetch("/api/v1/auth/sync", { method: "POST", isDemo: false });
-        } catch {
-          // Backend sync failure should not break auth state restoration
+
+    const unsub = onAuthStateChanged(
+      auth,
+      async (fbUser) => {
+        setUser(fbUser);
+        setSessionError(null);
+        if (fbUser) {
+          try {
+            await apiFetch("/api/v1/auth/sync", { method: "POST" });
+          } catch {
+            // Keep auth session active; individual pages surface friendly retry state if offline
+          }
+        } else {
+          queryClient.clear();
         }
+        setLoading(false);
+      },
+      () => {
+        setUser(null);
+        setSessionError("Your session could not be restored. Please sign in again.");
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    );
+
     return () => unsub();
-  }, []);
-
-  const toggleDarkMode = () => {
-    setDarkMode((prev) => {
-      const next = !prev;
-      if (next) {
-        document.documentElement.classList.add("dark");
-        window.localStorage.setItem("pulse_theme", "dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-        window.localStorage.setItem("pulse_theme", "light");
-      }
-      return next;
-    });
-  };
-
-  const setDemoMode = (val: boolean) => {
-    setIsDemo(val);
-    queryClient.invalidateQueries();
-  };
+  }, [queryClient]);
 
   const logout = async () => {
     await signOutUser();
     setUser(null);
-    setIsDemo(true);
     queryClient.clear();
   };
 
@@ -110,11 +92,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         value={{
           user,
           loading,
-          isDemo,
-          setDemoMode,
           firebaseReady,
-          darkMode,
-          toggleDarkMode,
+          sessionError,
           logout,
         }}
       >

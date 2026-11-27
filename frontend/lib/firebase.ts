@@ -1,12 +1,9 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import {
-  createUserWithEmailAndPassword,
   getAuth,
   GoogleAuthProvider,
-  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
-  updateProfile,
   type Auth,
   type UserCredential,
 } from "firebase/auth";
@@ -58,61 +55,31 @@ export function mapFirebaseAuthError(err: unknown): string {
   const code = (err as { code?: string })?.code || "";
   switch (code) {
     case "auth/popup-closed-by-user":
-      return "Sign-in popup was closed before completing authentication.";
+      return "Sign-in was cancelled before completing. Please try again.";
     case "auth/popup-blocked":
-      return "Your browser blocked the sign-in popup. Please allow popups for this site and try again.";
+      return "Your browser blocked the Google sign-in window. Allow popups for this site and try again.";
     case "auth/cancelled-popup-request":
-      return "Another sign-in attempt is already in progress.";
+      return "A sign-in window is already open.";
     case "auth/account-exists-with-different-credential":
-      return "An account already exists with this email using a different sign-in method. Sign in with your original method first.";
+      return "This email is already linked to a different sign-in method.";
     case "auth/network-request-failed":
-      return "Network error while contacting authentication servers. Check your connection and try again.";
-    case "auth/invalid-credential":
-    case "auth/wrong-password":
-    case "auth/user-not-found":
-      return "Invalid email or password.";
-    case "auth/email-already-in-use":
-      return "An account with this email already exists.";
-    case "auth/weak-password":
-      return "Password should be at least 6 characters.";
+      return "Network connection interrupted. Please check your internet connection and try again.";
+    case "auth/user-disabled":
+      return "This account has been disabled. Please contact support.";
     default:
       if (err instanceof Error && err.message.includes("not configured")) {
-        return "Firebase Authentication is not configured.";
+        return "Sign-in is temporarily unavailable. Please try again later.";
       }
-      return "Unable to complete authentication. Please try again.";
+      return "We couldn't complete Google sign-in. Please try again.";
   }
 }
 
 export async function signInWithGoogle(): Promise<UserCredential> {
   const firebaseAuth = getFirebaseAuth();
   if (!firebaseAuth) {
-    throw new Error("Firebase Authentication is not configured.");
+    throw new Error("Authentication is not configured.");
   }
   return signInWithPopup(firebaseAuth, googleProvider);
-}
-
-export async function signInWithEmail(email: string, password: string): Promise<UserCredential> {
-  const firebaseAuth = getFirebaseAuth();
-  if (!firebaseAuth) {
-    throw new Error("Firebase Authentication is not configured.");
-  }
-  return signInWithEmailAndPassword(firebaseAuth, email, password);
-}
-
-export async function registerWithEmail(
-  email: string,
-  password: string,
-  displayName?: string
-): Promise<UserCredential> {
-  const firebaseAuth = getFirebaseAuth();
-  if (!firebaseAuth) {
-    throw new Error("Firebase Authentication is not configured.");
-  }
-  const cred = await createUserWithEmailAndPassword(firebaseAuth, email, password);
-  if (displayName?.trim()) {
-    await updateProfile(cred.user, { displayName: displayName.trim() });
-  }
-  return cred;
 }
 
 export async function signOutUser(): Promise<void> {

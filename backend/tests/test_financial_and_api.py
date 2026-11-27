@@ -2,23 +2,38 @@ from datetime import date, timedelta
 
 from fastapi import HTTPException
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from app.api.demo import (
-    create_demo_transaction,
-    delete_demo_transaction,
-    demo_copilot_chat,
-    evaluate_demo_purchase,
-    get_demo_overview,
-    reset_demo,
+from app.api.deps import get_current_user
+from app.api.v1 import (
+    create_goal,
+    create_transaction,
+    delete_transaction,
+    get_conversation,
+    list_goals,
+    list_notifications,
+    list_transactions,
+    mark_notification_read,
+    update_transaction,
 )
 from app.core.security import verify_firebase_token
+from app.db.base import Base
 from app.financial.affordability import evaluate_purchase_affordability
 from app.financial.csv_import import parse_csv_transactions
 from app.financial.money import format_inr, rupees_to_paise
 from app.financial.recurring import detect_recurring_payments
 from app.financial.transactions import TxRecord
-from app.main import health_check
-from app.schemas.api import CopilotChatRequest, SimulatorRequest, TransactionCreate
+from app.main import app, health_check
+from app.models.models import AIConversation, Notification
+from app.schemas.api import GoalCreate, TransactionCreate, TransactionUpdate
+from app.storage.service import StorageService
+
+
+def _make_memory_db():
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    Base.metadata.create_all(bind=engine)
+    return sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)()
 
 
 def test_money_conversion_and_formatting():
@@ -44,7 +59,6 @@ def test_recurring_detection():
 
 
 def test_affordability_outcomes():
-    # ₹45,000 laptop when only ₹8,450 is available -> not_recommended
     res_bad = evaluate_purchase_affordability(
         purchase_name="Laptop",
         purchase_amount_minor=4500000,
@@ -56,7 +70,6 @@ def test_affordability_outcomes():
     )
     assert res_bad["outcome"] == "not_recommended"
 
-    # ₹1,500 headphones when ₹15,000 available -> affordable
     res_good = evaluate_purchase_affordability(
         purchase_name="Headphones",
         purchase_amount_minor=150000,
@@ -81,46 +94,12 @@ def test_csv_import_and_duplicate_detection():
     assert parsed["rows"][1]["category_name"] == "Groceries"
 
 
-@pytest.mark.asyncio
-async def test_demo_api_journey():
+def test_health_minimal_and_demo_routes_removed():
     health = health_check()
-    assert health["status"] == "ok"
+    assert health == {"status": "ok"}
 
-    data = get_demo_overview()
-    assert data["profile"]["display_name"] == "Aarav Sharma"
-    assert len(data["categories"]) > 0
-    assert len(data["recurring_payments"]) >= 3
-
-    # Simulator check for ₹45,000 laptop
-    sim = evaluate_demo_purchase(
-        SimulatorRequest(purchase_name="MacBook Air", purchase_amount_minor=4500000, payment_months=1)
-    )
-    assert sim["outcome"] == "not_recommended"
-
-    # AI chat when gateway unconfigured must return honest unavailable status
-    ai = await demo_copilot_chat(CopilotChatRequest(question="Where did my money go?"))
-    assert ai["status"] in ("unavailable", "ok")
-
-    # Create and delete transaction
-    created = create_demo_transaction(
-        TransactionCreate(
-            merchant="Test Chai",
-            description="Evening chai",
-            amount_minor=2000,
-            currency="INR",
-            transaction_type="expense",
-            payment_method="UPI",
-            source_name="GPay",
-            transaction_date=date.today(),
-        )
-    )
-    tx_id = created["id"]
-    deleted = delete_demo_transaction(tx_id)
-    assert deleted["deleted"] is True
-
-    # Reset demo
-    reset = reset_demo()
-    assert reset["status"] == "reset"
+    paths = [getattr(r, "path", "") for r in app.routes]
+    assert not any(p.startswith("/api/v1/demo") for p in paths)
 
 
 def test_firebase_token_verification_rejects_missing_or_invalid():
@@ -135,3 +114,84 @@ def test_firebase_token_verification_rejects_missing_or_invalid():
     with pytest.raises(HTTPException) as exc_empty:
         verify_firebase_token(authorization="Bearer   ")
     assert exc_empty.value.status_code == 401
+
+
+def test_all_v1_routes_require_authentication():
+    from app.api.v1 import router as v1_router
+
+    assert len(v1_router.routes) > 0
+    for route in v1_router.routes:
+        path = getattr(route, "path", "")
+        dependant = getattr(route, "dependant", None)
+        dep_calls = [d.call for d in (dependant.dependencies if dependant else [])]
+        assert get_current_user in dep_calls, f"Route {path} is missing get_current_user dependency"
+
+
+def test_cross_user_data_isolation(tmp_path):
+    db = _make_memory_db()
+    user_a = get_current_user(
+        {"uid": "uid-a", "email": "a@example.com", "email_verified": True, "name": "User A"},
+        db,
+    )
+    user_b = get_current_user(
+        {"uid": "uid-b", "email": "b@example.com", "email_verified": True, "name": "User B"},
+        db,
+    )
+    assert user_a.id != user_b.id
+
+    # User A creates a transaction & goal
+    tx_a = create_transaction(
+        TransactionCreate(
+            merchant="Swiggy",
+            description="Lunch",
+            amount_minor=25000,
+            currency="INR",
+            transaction_type="expense",
+            payment_method="UPI",
+            source_name="GPay",
+            transaction_date=date.today(),
+        ),
+        user=user_a,
+        db=db,
+    )
+    create_goal(
+        GoalCreate(name="Laptop", target_amount_minor=4500000, current_amount_minor=0, target_date=date.today() + timedelta(days=90)),
+        user=user_a,
+        db=db,
+    )
+
+    conv_a = AIConversation(id="conv-a", user_id=user_a.id, title="Private chat")
+    notif_a = Notification(id="notif-a", user_id=user_a.id, title="Alert", message="Private", notification_type="alert")
+    db.add(conv_a)
+    db.add(notif_a)
+    db.commit()
+
+    # User B cannot see User A's transactions, goals, or notifications
+    assert list_transactions(user=user_b, db=db, limit=100)["total"] == 0
+    assert len(list_goals(user=user_b, db=db)) == 0
+    assert len(list_notifications(user=user_b, db=db)["items"]) == 0
+
+    # User B cannot mutate or read User A's resources by ID
+    with pytest.raises(HTTPException) as exc_upd:
+        update_transaction(tx_a["id"], TransactionUpdate(merchant="Hacked"), user=user_b, db=db)
+    assert exc_upd.value.status_code == 404
+
+    with pytest.raises(HTTPException) as exc_del:
+        delete_transaction(tx_a["id"], user=user_b, db=db)
+    assert exc_del.value.status_code == 404
+
+    with pytest.raises(HTTPException) as exc_conv:
+        get_conversation("conv-a", user=user_b, db=db)
+    assert exc_conv.value.status_code == 404
+
+    with pytest.raises(HTTPException) as exc_notif:
+        mark_notification_read("notif-a", user=user_b, db=db)
+    assert exc_notif.value.status_code == 404
+
+    # Storage isolation: User B cannot read User A's stored file
+    storage = StorageService(root=tmp_path)
+    storage.save_bytes(user_a.id, "uploads/transactions", "secret.csv", b"date,merchant,amount\n")
+    assert storage.list_user_files(user_b.id, "uploads/transactions") == []
+    with pytest.raises(HTTPException) as exc_file:
+        storage.read_file(user_b.id, "uploads/transactions", "secret.csv")
+    assert exc_file.value.status_code == 404

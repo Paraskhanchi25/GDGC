@@ -145,7 +145,6 @@ def get_profile(
 ) -> dict:
     prof = _get_user_profile(db, user.id)
     return {
-        "is_demo": False,
         "id": user.id,
         "email": user.email,
         "display_name": user.display_name,
@@ -620,8 +619,11 @@ def evaluate_simulator(
 # --- AI Copilot ---
 
 @router.get("/ai/status")
-def get_copilot_status() -> dict:
-    return CopilotService().status()
+def get_copilot_status(
+    _user: Annotated[User, Depends(get_current_user)],
+) -> dict:
+    status_info = CopilotService().status()
+    return {"available": status_info["configured"]}
 
 
 @router.post("/ai/chat")

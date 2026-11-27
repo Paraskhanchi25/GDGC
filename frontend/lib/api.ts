@@ -8,57 +8,67 @@ export class ApiError extends Error {
   }
 }
 
-export function getDemoSessionId(): string {
-  if (typeof window === "undefined") return "default";
-  let id = window.localStorage.getItem("pulse_demo_session");
-  if (!id) {
-    id = "demo-" + Math.random().toString(36).slice(2, 10);
-    window.localStorage.setItem("pulse_demo_session", id);
+function toFriendlyErrorMessage(status: number, rawDetail?: string): string {
+  if (status === 401) {
+    return "Please sign in to continue.";
   }
-  return id;
+  if (status === 403) {
+    return "You do not have permission to access this information.";
+  }
+  if (status === 404) {
+    return "The requested item could not be found.";
+  }
+  if (status === 413) {
+    return "The uploaded file is too large. Please choose a smaller file.";
+  }
+  if (status === 400 && rawDetail && !/traceback|sql|exception|fastapi|neon|smtp/i.test(rawDetail)) {
+    return rawDetail;
+  }
+  if (status >= 500) {
+    return "We couldn't load your financial information right now. Please try again.";
+  }
+  return "Something went wrong while processing your request. Please try again.";
 }
 
-export async function apiFetch<T>(
-  path: string,
-  options: RequestInit & { isDemo?: boolean } = {}
-): Promise<T> {
-  const { isDemo = true, headers: customHeaders, ...rest } = options;
+export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const { headers: customHeaders, ...rest } = options;
   const headers = new Headers(customHeaders);
 
   if (!(rest.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
-  if (isDemo) {
-    headers.set("X-Demo-Session", getDemoSessionId());
-  } else {
-    const auth = getFirebaseAuth();
-    const user = auth?.currentUser;
-    if (user) {
-      const token = await user.getIdToken();
-      headers.set("Authorization", `Bearer ${token}`);
-    }
+  const auth = getFirebaseAuth();
+  const user = auth?.currentUser;
+  if (!user) {
+    throw new ApiError("Please sign in to continue.", 401);
   }
 
-  const res = await fetch(path, {
-    ...rest,
-    headers,
-  });
+  const token = await user.getIdToken();
+  headers.set("Authorization", `Bearer ${token}`);
+
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      ...rest,
+      headers,
+    });
+  } catch {
+    throw new ApiError("Unable to reach PULSE right now. Please check your connection and try again.", 0);
+  }
 
   if (!res.ok) {
-    let detail = `Request failed (${res.status})`;
+    let rawDetail: string | undefined;
     try {
       const err = await res.json();
-      if (err?.detail) detail = typeof err.detail === "string" ? err.detail : JSON.stringify(err.detail);
+      if (typeof err?.detail === "string") {
+        rawDetail = err.detail;
+      }
     } catch {
       // ignore non-json error body
     }
-    throw new ApiError(detail, res.status);
+    throw new ApiError(toFriendlyErrorMessage(res.status, rawDetail), res.status);
   }
 
   return res.json() as Promise<T>;
-}
-
-export function apiPrefix(isDemo: boolean): string {
-  return isDemo ? "/api/v1/demo" : "/api/v1";
 }

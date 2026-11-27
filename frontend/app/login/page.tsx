@@ -3,25 +3,16 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Compass, Loader2, ArrowRight, AlertCircle } from "lucide-react";
+import { AlertCircle, Compass, Loader2, ShieldCheck } from "lucide-react";
+import { BrandedLoader } from "@/components/branded-loader";
 import { usePulseAuth } from "@/components/providers";
 import { apiFetch } from "@/lib/api";
-import {
-  mapFirebaseAuthError,
-  registerWithEmail,
-  signInWithEmail,
-  signInWithGoogle,
-} from "@/lib/firebase";
+import { mapFirebaseAuthError, signInWithGoogle } from "@/lib/firebase";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, loading: authLoading, firebaseReady, setDemoMode } = usePulseAuth();
+  const { user, loading: authLoading, firebaseReady, sessionError } = usePulseAuth();
 
-  const [mode, setMode] = useState<"signin" | "register">("signin");
-  const [displayName, setDisplayName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,23 +22,22 @@ export default function LoginPage() {
     }
   }, [authLoading, user, router]);
 
-  const syncWithBackend = async () => {
-    try {
-      await apiFetch("/api/v1/auth/sync", { method: "POST", isDemo: false });
-    } catch {
-      // Backend DB may not be configured locally; keep Firebase session active and let dashboard surface API state
-    }
-  };
+  if (authLoading || user) {
+    return <BrandedLoader message="Checking your session" />;
+  }
 
   const handleGoogleSignIn = async () => {
-    if (googleSubmitting || submitting) return;
+    if (googleSubmitting) return;
     setError(null);
     setGoogleSubmitting(true);
     try {
       await signInWithGoogle();
-      setDemoMode(false);
-      await syncWithBackend();
-      router.push("/home");
+      try {
+        await apiFetch("/api/v1/auth/sync", { method: "POST" });
+      } catch {
+        // Keep session active; dashboard handles offline retry state cleanly
+      }
+      router.replace("/home");
     } catch (err) {
       setError(mapFirebaseAuthError(err));
     } finally {
@@ -55,84 +45,52 @@ export default function LoginPage() {
     }
   };
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (submitting || googleSubmitting) return;
-    setError(null);
-    setSubmitting(true);
-    try {
-      if (mode === "register") {
-        await registerWithEmail(email, password, displayName);
-      } else {
-        await signInWithEmail(email, password);
-      }
-      setDemoMode(false);
-      await syncWithBackend();
-      router.push("/home");
-    } catch (err) {
-      setError(mapFirebaseAuthError(err));
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const displayError = error || sessionError;
 
   return (
-    <div className="flex min-h-screen flex-col justify-between bg-[var(--bg-canvas)] text-[var(--text-primary)]">
-      <header className="border-b border-[var(--border-stone)] bg-[var(--bg-paper)]">
+    <div className="flex min-h-screen flex-col justify-between bg-[var(--background)] text-[var(--foreground)]">
+      <header className="border-b border-[var(--border-subtle)] bg-[var(--background-elevated)]">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent-espresso)] text-[var(--bg-paper)]">
-              <Compass className="h-4 w-4" />
+            <div className="surface-metallic flex h-8 w-8 items-center justify-center rounded-lg">
+              <Compass className="h-4 w-4 text-[var(--champagne)]" />
             </div>
-            <span className="font-serif-display text-xl tracking-tight">PULSE</span>
+            <span className="font-serif-display text-xl tracking-tight text-[var(--foreground)]">PULSE</span>
           </Link>
-          <Link
-            href="/home"
-            onClick={() => setDemoMode(true)}
-            className="text-xs font-medium text-[var(--text-secondary)] hover:underline"
-          >
-            Explore Demo instead
+          <Link href="/" className="text-xs font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)]">
+            Back to overview
           </Link>
         </div>
       </header>
 
       <main className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-12">
-        <div className="w-full rounded-xl border border-[var(--border-stone)] bg-[var(--bg-paper)] p-7 shadow-sm">
-          <p className="text-xs uppercase tracking-widest text-[var(--text-muted)]">PULSE Account</p>
-          <h1 className="mt-1 font-serif-display text-2xl text-[var(--text-primary)]">
-            {mode === "signin" ? "Sign in to your workspace" : "Create your PULSE account"}
-          </h1>
-          <p className="mt-1.5 text-xs text-[var(--text-muted)]">
-            Your financial records are scoped privately to your verified account.
+        <div className="surface-metallic copper-glow w-full rounded-2xl p-8">
+          <p className="text-xs uppercase tracking-widest text-[var(--amber)]">Private Workspace</p>
+          <h1 className="mt-2 font-serif-display text-3xl text-[var(--foreground)]">Sign in to PULSE</h1>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--foreground-muted)]">
+            Access your personal allowance forecast, transactions, savings goals, and financial assistant.
           </p>
 
-          {!firebaseReady && (
-            <div className="mt-4 flex items-start gap-2 rounded-lg border border-[var(--status-warning)] bg-[var(--bg-canvas)] p-3 text-xs text-[var(--text-secondary)]">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" />
-              <span>
-                Firebase configuration is missing. Set <code>NEXT_PUBLIC_FIREBASE_*</code> variables to enable sign-in.
-              </span>
-            </div>
-          )}
-
-          {error && (
-            <div className="mt-4 flex items-start gap-2 rounded-lg border border-[var(--status-danger)] bg-[var(--bg-canvas)] p-3 text-xs text-[var(--status-danger)]">
+          {displayError && (
+            <div
+              role="alert"
+              className="mt-5 flex items-start gap-2.5 rounded-xl border border-[var(--danger)]/50 bg-[var(--background)] p-3.5 text-xs text-[var(--danger)]"
+            >
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{error}</span>
+              <span>{displayError}</span>
             </div>
           )}
 
-          {/* Google Sign-In Button */}
           <button
             type="button"
             onClick={handleGoogleSignIn}
-            disabled={!firebaseReady || googleSubmitting || submitting}
-            className="mt-6 flex w-full items-center justify-center gap-2.5 rounded-lg border border-[var(--border-stone)] bg-[var(--bg-canvas)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--bg-muted)] disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!firebaseReady || googleSubmitting}
+            className="mt-6 flex w-full items-center justify-center gap-3 rounded-xl bg-[var(--accent)] px-5 py-3.5 text-sm font-medium text-[var(--background)] transition hover:bg-[var(--accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {googleSubmitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="h-4 w-4 rounded-full bg-white p-0.5" viewBox="0 0 24 24" aria-hidden="true">
                 <path
                   fill="#4285F4"
                   d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"
@@ -151,102 +109,12 @@ export default function LoginPage() {
                 />
               </svg>
             )}
-            {googleSubmitting ? "Signing in with Google..." : "Continue with Google"}
+            {googleSubmitting ? "Signing in..." : "Continue with Google"}
           </button>
 
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-[var(--border-stone)]" />
-            <span className="text-[11px] uppercase tracking-wider text-[var(--text-muted)]">or</span>
-            <div className="h-px flex-1 bg-[var(--border-stone)]" />
-          </div>
-
-          <form onSubmit={handleEmailSubmit} className="space-y-3 text-xs">
-            {mode === "register" && (
-              <div>
-                <label className="mb-1 block font-medium text-[var(--text-secondary)]">Full Name</label>
-                <input
-                  required
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="e.g., Aarav Sharma"
-                  className="w-full rounded-lg border border-[var(--border-stone)] bg-[var(--bg-canvas)] px-3 py-2 text-sm outline-none focus:border-[var(--accent-espresso)]"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="mb-1 block font-medium text-[var(--text-secondary)]">Email</label>
-              <input
-                required
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="student@college.edu"
-                className="w-full rounded-lg border border-[var(--border-stone)] bg-[var(--bg-canvas)] px-3 py-2 text-sm outline-none focus:border-[var(--accent-espresso)]"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block font-medium text-[var(--text-secondary)]">Password</label>
-              <input
-                required
-                type="password"
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full rounded-lg border border-[var(--border-stone)] bg-[var(--bg-canvas)] px-3 py-2 text-sm outline-none focus:border-[var(--accent-espresso)]"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={!firebaseReady || submitting || googleSubmitting}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--accent-espresso)] py-2.5 text-sm font-medium text-[var(--bg-paper)] transition hover:opacity-90 disabled:opacity-50"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Please wait...
-                </>
-              ) : (
-                <>
-                  {mode === "signin" ? "Sign in with Email" : "Create Account"}
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-5 text-center text-xs text-[var(--text-muted)]">
-            {mode === "signin" ? (
-              <>
-                New to PULSE?{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode("register");
-                    setError(null);
-                  }}
-                  className="font-medium text-[var(--text-primary)] hover:underline"
-                >
-                  Create an account
-                </button>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode("signin");
-                    setError(null);
-                  }}
-                  className="font-medium text-[var(--text-primary)] hover:underline"
-                >
-                  Sign in
-                </button>
-              </>
-            )}
+          <div className="mt-6 flex items-center gap-2 border-t border-[var(--border-subtle)] pt-4 text-xs text-[var(--foreground-secondary)]">
+            <ShieldCheck className="h-4 w-4 shrink-0 text-[var(--positive)]" />
+            <span>Only Google sign-in is enabled. Your records are private to your account.</span>
           </div>
         </div>
       </main>
